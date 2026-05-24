@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Metrics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-faint: #ede9fe;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --surface: #f8fafc;
+      --input-bg: #fafafa;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --neu-bg: #f1f5f9;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+    }
+    [data-theme="dark"] {
+      --primary: #818cf8;
+      --primary-faint: #1e1b4b;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --surface: #263348;
+      --input-bg: #1a2840;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --neu-bg: #1e293b;
+      --shadow: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.5);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+      transition: background .25s, color .25s;
+    }
+    .app { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+      color: #fff; padding: 32px 36px; border-radius: 16px; margin-bottom: 24px; box-shadow: var(--shadow-md);
+    }
+    header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    header p  { opacity: .82; font-size: 14px; }
+
+    /* ── Section card ── */
+    .card {
+      background: var(--card); border-radius: 12px; padding: 24px;
+      margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 17px; font-weight: 600; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .badge {
+      font-size: 11px; font-weight: 600; padding: 2px 9px;
+      border-radius: 20px; background: var(--primary-faint); color: var(--primary);
+    }
+
+    /* ── Inputs ── */
+    .inputs-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 20px;
+    }
+    .igroup { display: flex; flex-direction: column; gap: 5px; }
+    .igroup label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .03em; text-transform: uppercase; }
+    .igroup .hint { font-size: 11px; color: var(--muted); }
+    .ifield {
+      position: relative;
+    }
+    .ifield span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+    .ifield input {
+      width: 100%; padding: 9px 10px 9px 22px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 15px; color: var(--text); background: var(--input-bg);
+      transition: border-color .18s, box-shadow .18s, background .25s;
+    }
+    .ifield input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); background: var(--card); }
+
+    .btn-calc {
+      background: linear-gradient(135deg, #4338ca, #7c3aed); color: #fff;
+      border: none; padding: 11px 30px; border-radius: 8px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: opacity .18s, transform .1s;
+    }
+    .btn-calc:hover  { opacity: .9; transform: translateY(-1px); }
+    .btn-calc:active { transform: translateY(0); }
+
+    /* ── Metric Cards ── */
+    .metrics-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px;
+    }
+    .mc {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; transition: transform .18s, box-shadow .18s;
+    }
+    .mc:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .mc-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .mc-val   { font-size: 22px; font-weight: 700; color: var(--text); }
+    .mc-unit  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    /* ── Health ── */
+    .health-bar {
+      display: flex; align-items: center; gap: 28px; padding: 20px 24px;
+      background: var(--surface); border-radius: 10px; border: 1.5px solid var(--border);
+    }
+    .health-ratio-num { font-size: 48px; font-weight: 800; line-height: 1; }
+    .health-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .health-pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+      border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 8px;
+    }
+    .pill-excellent { background: #dcfce7; color: #16a34a; }
+    .pill-good      { background: #d1fae5; color: #059669; }
+    .pill-fair      { background: #fef9c3; color: #ca8a04; }
+    .pill-poor      { background: #fee2e2; color: #dc2626; }
+    .health-benchmarks { display: flex; flex-direction: column; gap: 7px; }
+    .bm { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+    .bm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    /* progress bar */
+    .ratio-track { flex: 1; background: var(--border); border-radius: 99px; height: 10px; position: relative; overflow: hidden; }
+    .ratio-fill  { height: 100%; border-radius: 99px; transition: width .4s, background .4s; }
+
+    /* ── Charts ── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-wrap { position: relative; height: 280px; }
+    .chart-subtitle { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
+
+    /* ── Sensitivity ── */
+    .sens-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    @media (max-width: 800px) { .sens-layout { grid-template-columns: 1fr; } }
+    .sliders-col { display: flex; flex-direction: column; gap: 22px; }
+    .slider-group { display: flex; flex-direction: column; gap: 7px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; }
+    .slider-label { font-size: 14px; font-weight: 500; }
+    .slider-badge { font-size: 13px; font-weight: 700; background: var(--primary-faint); color: var(--primary); padding: 2px 9px; border-radius: 5px; }
+    .slider-meta { font-size: 12px; color: var(--muted); }
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none;
+      background: linear-gradient(to right, var(--primary) 50%, var(--border) 50%);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: var(--primary); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+
+    .results-col { display: flex; flex-direction: column; gap: 10px; }
+    .results-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
+    .sens-row {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 13px 16px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .sens-row-label { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .sens-row-vals  { display: flex; align-items: center; gap: 8px; }
+    .sens-base { font-size: 13px; color: #94a3b8; text-decoration: line-through; }
+    .sens-new  { font-size: 15px; font-weight: 700; }
+    .delta-pill { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+    .pos { background: #dcfce7; color: #16a34a; }
+    .neg { background: #fee2e2; color: #dc2626; }
+    .neu { background: var(--neu-bg); color: var(--muted); }
+    .reset-btn {
+      align-self: flex-start; padding: 7px 16px; border: 1.5px solid var(--border);
+      border-radius: 7px; background: var(--card); cursor: pointer; font-size: 13px; color: var(--muted);
+      transition: border-color .15s;
+    }
+    .reset-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* ── Scenarios ── */
+    .scenarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 800px) { .scenarios-grid { grid-template-columns: 1fr; } }
+    .sc { border: 2px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .sc.base { border-color: var(--primary); }
+    .sc.opt  { border-color: var(--success); }
+    .sc.pes  { border-color: var(--danger);  }
+    .sc-head { padding: 11px 16px; text-align: center; font-weight: 700; font-size: 13px; }
+    .sc.base .sc-head { background: var(--primary); color: #fff; }
+    .sc.opt  .sc-head { background: var(--success);  color: #fff; }
+    .sc.pes  .sc-head { background: var(--danger);   color: #fff; }
+    .sc-inputs { padding: 14px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 9px; }
+    .sc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .sc-lbl { font-size: 12px; color: var(--muted); flex: 1; }
+    .sc-input {
+      width: 90px; padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 13px; text-align: right; color: var(--text); background: var(--input-bg);
+    }
+    .sc-input:focus { outline: none; border-color: var(--primary); }
+    .sc-results { padding: 14px; display: flex; flex-direction: column; gap: 7px; }
+    .sc-res-row { display: flex; justify-content: space-between; align-items: center; }
+    .sc-res-lbl { font-size: 12px; color: var(--muted); }
+    .sc-res-val { font-size: 13px; font-weight: 600; }
+
+    /* ── Dark mode toggle ── */
+    .theme-btn {
+      position: absolute; top: 28px; right: 32px;
+      background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.3);
+      color: #fff; padding: 7px 14px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+      transition: background .2s;
+    }
+    .theme-btn:hover { background: rgba(255,255,255,.25); }
+    header { position: relative; }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <h1>Business Metrics Dashboard</h1>
+    <p>Enter raw figures below — calculate CPA, ARPU, LTV, payback period &amp; more, then explore scenarios and sensitivity in real time.</p>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark mode</button>
+  </header>
+
+  <!-- ── INPUTS ── -->
+  <div class="card">
+    <div class="card-title">Raw Inputs</div>
+    <div class="inputs-grid">
+      <div class="igroup">
+        <label>Total Active Customers</label>
+        <div class="ifield"><input type="number" id="i_totalCust" value="500" min="0" /></div>
+        <span class="hint">Current customer count</span>
+      </div>
+      <div class="igroup">
+        <label>New Customers (period)</label>
+        <div class="ifield"><input type="number" id="i_newCust" value="50" min="0" /></div>
+        <span class="hint">Acquired this period</span>
+      </div>
+      <div class="igroup">
+        <label>Churned Customers (period)</label>
+        <div class="ifield"><input type="number" id="i_churnCust" value="10" min="0" /></div>
+        <span class="hint">Lost this period</span>
+      </div>
+      <div class="igroup">
+        <label>Monthly Revenue</label>
+        <div class="ifield"><span>$</span><input type="number" id="i_revenue" value="50000" min="0" /></div>
+        <span class="hint">Total monthly revenue</span>
+      </div>
+      <div class="igroup">
+        <label>Acquisition Spend (period)</label>
+        <div class="ifield"><span>$</span><input type="number" id="i_acqSpend" value="25000" min="0" /></div>
+        <span class="hint">Marketing + sales cost</span>
+      </div>
+      <div class="igroup">
+        <label>Monthly COGS / Variable Costs</label>
+        <div class="ifield"><span>$</span><input type="number" id="i_cogs" value="15000" min="0" /></div>
+        <span class="hint">Scales with customers</span>
+      </div>
+      <div class="igroup">
+        <label>Monthly Fixed Costs</label>
+        <div class="ifield"><span>$</span><input type="number" id="i_fixed" value="10000" min="0" /></div>
+        <span class="hint">Rent, salaries, tools…</span>
+      </div>
+    </div>
+    <button class="btn-calc" onclick="calculate()">Calculate Metrics</button>
+  </div>
+
+  <!-- ── METRIC CARDS ── -->
+  <div class="card hidden" id="sec-metrics">
+    <div class="card-title">Calculated Metrics</div>
+    <div class="metrics-grid">
+      <div class="mc"><div class="mc-label">CPA</div><div class="mc-val" id="mc-cpa">—</div><div class="mc-unit">per new customer</div></div>
+      <div class="mc"><div class="mc-label">ARPU</div><div class="mc-val" id="mc-arpu">—</div><div class="mc-unit">per customer / mo</div></div>
+      <div class="mc"><div class="mc-label">RMC</div><div class="mc-val" id="mc-rmc">—</div><div class="mc-unit">recurring cost / customer</div></div>
+      <div class="mc"><div class="mc-label">EPC</div><div class="mc-val" id="mc-epc">—</div><div class="mc-unit">earnings / customer / mo</div></div>
+      <div class="mc"><div class="mc-label">Payback Period</div><div class="mc-val" id="mc-payback">—</div><div class="mc-unit">months to recover CPA</div></div>
+      <div class="mc"><div class="mc-label">LTV</div><div class="mc-val" id="mc-ltv">—</div><div class="mc-unit">lifetime value</div></div>
+      <div class="mc"><div class="mc-label">Churn Rate</div><div class="mc-val" id="mc-churn">—</div><div class="mc-unit">monthly</div></div>
+      <div class="mc"><div class="mc-label">Gross Margin</div><div class="mc-val" id="mc-gm">—</div><div class="mc-unit">% of revenue</div></div>
+      <div class="mc"><div class="mc-label">MRR</div><div class="mc-val" id="mc-mrr">—</div><div class="mc-unit">monthly recurring rev.</div></div>
+      <div class="mc"><div class="mc-label">ARR</div><div class="mc-val" id="mc-arr">—</div><div class="mc-unit">annual recurring rev.</div></div>
+    </div>
+  </div>
+
+  <!-- ── HEALTH ── -->
+  <div class="card hidden" id="sec-health">
+    <div class="card-title">LTV : CPA Health <span class="badge">Key Ratio</span></div>
+    <div class="health-bar">
+      <div>
+        <div class="health-ratio-num" id="h-num">—</div>
+        <div class="health-sub">LTV : CPA Ratio</div>
+        <div id="h-pill" class="health-pill">—</div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+        <div class="ratio-track"><div class="ratio-fill" id="h-bar" style="width:0%; background: #10b981;"></div></div>
+        <div style="font-size:11px; color:var(--muted); display:flex; justify-content:space-between;"><span>0:1</span><span>3:1 Good</span><span>5:1 Excellent</span></div>
+      </div>
+      <div class="health-benchmarks">
+        <div class="bm"><span class="bm-dot" style="background:#16a34a"></span>Excellent: 5 : 1 or higher</div>
+        <div class="bm"><span class="bm-dot" style="background:#059669"></span>Good: 3 : 1 – 5 : 1</div>
+        <div class="bm"><span class="bm-dot" style="background:#ca8a04"></span>Fair: 1 : 1 – 3 : 1</div>
+        <div class="bm"><span class="bm-dot" style="background:#dc2626"></span>Poor: Below 1 : 1</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHARTS ── -->
+  <div class="card hidden" id="sec-charts">
+    <div class="card-title">Visualizations</div>
+    <div class="charts-grid">
+      <div>
+        <div class="chart-subtitle">Per-Customer Economics ($)</div>
+        <div class="chart-wrap"><canvas id="ch-metrics"></canvas></div>
+      </div>
+      <div>
+        <div class="chart-subtitle">Breakeven Timeline — cumulative P&amp;L per customer</div>
+        <div class="chart-wrap"><canvas id="ch-breakeven"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SENSITIVITY ── -->
+  <div class="card hidden" id="sec-sens">
+    <div class="card-title">Sensitivity Analysis <span class="badge">Live</span></div>
+    <div class="sens-layout">
+
+      <div class="sliders-col">
+        <!-- CPA -->
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">CPA adjustment</span>
+            <span class="slider-badge" id="sl-cpa-badge">+0%</span>
+          </div>
+          <input type="range" id="sl-cpa" min="-50" max="150" value="0" oninput="sens()" />
+          <div class="slider-meta">Base: <span id="sl-cpa-base">—</span> &rarr; Adjusted: <span id="sl-cpa-adj">—</span></div>
+        </div>
+        <!-- ARPU -->
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">ARPU adjustment</span>
+            <span class="slider-badge" id="sl-arpu-badge">+0%</span>
+          </div>
+          <input type="range" id="sl-arpu" min="-50" max="100" value="0" oninput="sens()" />
+          <div class="slider-meta">Base: <span id="sl-arpu-base">—</span> &rarr; Adjusted: <span id="sl-arpu-adj">—</span></div>
+        </div>
+        <!-- Churn -->
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Churn rate adjustment</span>
+            <span class="slider-badge" id="sl-churn-badge">+0%</span>
+          </div>
+          <input type="range" id="sl-churn" min="-80" max="200" value="0" oninput="sens()" />
+          <div class="slider-meta">Base: <span id="sl-churn-base">—</span> &rarr; Adjusted: <span id="sl-churn-adj">—</span></div>
+        </div>
+        <!-- Gross Margin -->
+        <div class="slider-group">
+          <div class="slider-header">
+            <span class="slider-label">Gross margin (percentage points)</span>
+            <span class="slider-badge" id="sl-gm-badge">+0 pp</span>
+          </div>
+          <input type="range" id="sl-gm" min="-30" max="30" value="0" oninput="sens()" />
+          <div class="slider-meta">Base: <span id="sl-gm-base">—</span> &rarr; Adjusted: <span id="sl-gm-adj">—</span></div>
+        </div>
+        <button class="reset-btn" onclick="resetSliders()">Reset sliders</button>
+      </div>
+
+      <div class="results-col">
+        <div class="results-label">Impact on key metrics</div>
+        <div class="sens-row">
+          <span class="sens-row-label">LTV</span>
+          <div class="sens-row-vals"><span class="sens-base" id="s-ltv-b">—</span><span class="sens-new" id="s-ltv-n">—</span><span class="delta-pill" id="s-ltv-d">—</span></div>
+        </div>
+        <div class="sens-row">
+          <span class="sens-row-label">Payback Period</span>
+          <div class="sens-row-vals"><span class="sens-base" id="s-pb-b">—</span><span class="sens-new" id="s-pb-n">—</span><span class="delta-pill" id="s-pb-d">—</span></div>
+        </div>
+        <div class="sens-row">
+          <span class="sens-row-label">EPC</span>
+          <div class="sens-row-vals"><span class="sens-base" id="s-epc-b">—</span><span class="sens-new" id="s-epc-n">—</span><span class="delta-pill" id="s-epc-d">—</span></div>
+        </div>
+        <div class="sens-row">
+          <span class="sens-row-label">LTV : CPA Ratio</span>
+          <div class="sens-row-vals"><span class="sens-base" id="s-ratio-b">—</span><span class="sens-new" id="s-ratio-n">—</span><span class="delta-pill" id="s-ratio-d">—</span></div>
+        </div>
+        <div class="sens-row">
+          <span class="sens-row-label">MRR (projected)</span>
+          <div class="sens-row-vals"><span class="sens-base" id="s-mrr-b">—</span><span class="sens-new" id="s-mrr-n">—</span><span class="delta-pill" id="s-mrr-d">—</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCENARIOS ── -->
+  <div class="card hidden" id="sec-scenarios">
+    <div class="card-title">Scenario Comparison</div>
+    <div class="scenarios-grid">
+
+      <!-- Base -->
+      <div class="sc base">
+        <div class="sc-head">Base (from inputs)</div>
+        <div class="sc-inputs" style="font-size:12px; color:var(--muted); font-style:italic;">Calculated from your inputs — no adjustments.</div>
+        <div class="sc-results" id="sc-base"></div>
+      </div>
+
+      <!-- Optimistic -->
+      <div class="sc opt">
+        <div class="sc-head">Optimistic</div>
+        <div class="sc-inputs">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">OVERRIDE INPUTS</div>
+          <div class="sc-row"><span class="sc-lbl">CPA ($)</span><input class="sc-input" id="sc-opt-cpa" type="number" oninput="renderScenarios()" /></div>
+          <div class="sc-row"><span class="sc-lbl">ARPU ($/mo)</span><input class="sc-input" id="sc-opt-arpu" type="number" oninput="renderScenarios()" /></div>
+          <div class="sc-row"><span class="sc-lbl">Churn rate (%)</span><input class="sc-input" id="sc-opt-churn" type="number" step="0.1" oninput="renderScenarios()" /></div>
+          <div class="sc-row"><span class="sc-lbl">Gross margin (%)</span><input class="sc-input" id="sc-opt-gm" type="number" step="1" oninput="renderScenarios()" /></div>
+        </div>
+        <div class="sc-results" id="sc-opt"></div>
+      </div>
+
+      <!-- Pessimistic -->
+      <div class="sc pes">
+        <div class="sc-head">Pessimistic</div>
+        <div class="sc-inputs">
+          <div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px;">OVERRIDE INPUTS</div>
+          <div class="sc-row"><span class="sc-lbl">CPA ($)</span><input class="sc-input" id="sc-pes-cpa" type="number" oninput="renderScenarios()" /></div>
+          <div class="sc-row"><span class="sc-lbl">ARPU ($/mo)</span><input class="sc-input" id="sc-pes-arpu" type="number" oninput="renderScenarios()" /></div>
+          <div class="sc-row"><span class="sc-lbl">Churn rate (%)</span><input class="sc-input" id="sc-pes-churn" type="number" step="0.1" oninput="renderScenarios()" /></div>
+          <div class="sc-row"><span class="sc-lbl">Gross margin (%)</span><input class="sc-input" id="sc-pes-gm" type="number" step="1" oninput="renderScenarios()" /></div>
+        </div>
+        <div class="sc-results" id="sc-pes"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let B = {};  // base metrics + raw inputs
+let chartMetrics = null, chartBreakeven = null;
+
+// ─── Formatters ───────────────────────────────────────────────────────────────
+const N  = (v, d=0) => (v == null || !isFinite(v)) ? null : v;
+const f0 = v => N(v) == null ? '—' : v.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+const f2 = v => N(v) == null ? '—' : v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const f1 = v => N(v) == null ? '—' : v.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
+const fc  = v => N(v) == null ? '—' : '$' + f0(v);
+const fk  = v => {
+  if (N(v) == null) return '—';
+  if (Math.abs(v) >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return '$' + (v/1e3).toFixed(1) + 'K';
+  return '$' + f0(v);
+};
+const fmo = v => N(v) == null ? '—' : (v > 999 ? '∞' : f1(v) + ' mo');
+const fpct= v => N(v) == null ? '—' : f1(v) + '%';
+
+// ─── Core calculation ─────────────────────────────────────────────────────────
+function compute(totalCust, newCust, churnCust, revenue, acqSpend, cogs, fixed) {
+  const cpa       = newCust  > 0 ? acqSpend / newCust : null;
+  const arpu      = totalCust> 0 ? revenue  / totalCust : null;
+  const churnRate = totalCust> 0 ? churnCust / totalCust : null; // ratio
+  const gm        = revenue  > 0 ? (revenue - cogs) / revenue * 100 : null;
+  const rmc       = totalCust> 0 ? (cogs + fixed) / totalCust : null;
+  const epc       = (arpu != null && rmc != null) ? arpu - rmc : null;
+  const ltv       = (arpu != null && churnRate > 0 && gm != null)
+                    ? arpu * (gm / 100) / churnRate : null;
+  const payback   = (cpa != null && epc != null && epc > 0) ? cpa / epc : null;
+  const mrr       = revenue;
+  const arr       = revenue * 12;
+  const ratio     = (ltv != null && cpa > 0) ? ltv / cpa : null;
+  return { cpa, arpu, churnRate, gm, rmc, epc, ltv, payback, mrr, arr, ratio };
+}
+
+// Scenario / sensitivity helper — derive metrics from overridden key inputs
+// adjARPU change is assumed to be driven by price (variable costs stay fixed per unit)
+function computeFrom(cpa, arpu, churnPct, gmPct, baseRMC_fixed, baseRMC_var, baseARPU) {
+  // variable cost per customer scales with arpu ratio, fixed cost stays same
+  const arpuRatio = baseARPU > 0 ? arpu / baseARPU : 1;
+  const rmc = baseRMC_fixed + baseRMC_var * arpuRatio;
+  const epc = arpu - rmc;
+  const churnRate = churnPct / 100;
+  const ltv = (churnRate > 0) ? arpu * (gmPct / 100) / churnRate : null;
+  const payback = (cpa > 0 && epc > 0) ? cpa / epc : null;
+  const ratio   = (ltv != null && cpa > 0) ? ltv / cpa : null;
+  return { epc, ltv, payback, ratio };
+}
+
+// ─── Main calculate ───────────────────────────────────────────────────────────
+function calculate() {
+  const g = id => parseFloat(document.getElementById(id).value) || 0;
+  const totalCust = g('i_totalCust'), newCust = g('i_newCust'), churnCust = g('i_churnCust');
+  const revenue   = g('i_revenue'),   acqSpend= g('i_acqSpend');
+  const cogs      = g('i_cogs'),      fixed   = g('i_fixed');
+
+  const m = compute(totalCust, newCust, churnCust, revenue, acqSpend, cogs, fixed);
+
+  // Store full state for sensitivity / scenario reuse
+  B = { ...m, totalCust, newCust, churnCust, revenue, acqSpend, cogs, fixed,
+    rmc_var: totalCust > 0 ? cogs  / totalCust : 0,
+    rmc_fixed: totalCust > 0 ? fixed / totalCust : 0,
+  };
+
+  // Reveal sections
+  ['sec-metrics','sec-health','sec-charts','sec-sens','sec-scenarios'].forEach(id => {
+    document.getElementById(id).classList.remove('hidden');
+  });
+
+  // ── Metric cards ──
+  setText('mc-cpa',    fc(m.cpa));
+  setText('mc-arpu',   fc(m.arpu));
+  setText('mc-rmc',    fc(m.rmc));
+  setText('mc-epc',    fc(m.epc));
+  setText('mc-payback',fmo(m.payback));
+  setText('mc-ltv',    fk(m.ltv));
+  setText('mc-churn',  fpct(m.churnRate != null ? m.churnRate * 100 : null));
+  setText('mc-gm',     fpct(m.gm));
+  setText('mc-mrr',    fk(m.mrr));
+  setText('mc-arr',    fk(m.arr));
+
+  // ── Health indicator ──
+  const ratio = m.ratio;
+  setText('h-num', ratio != null ? f2(ratio) + ' : 1' : '—');
+  const pill = document.getElementById('h-pill');
+  const bar  = document.getElementById('h-bar');
+  let cls = 'pill-poor', label = '● Poor', barPct = 0, barColor = '#ef4444';
+  if (ratio != null) {
+    if (ratio >= 5)  { cls='pill-excellent'; label='● Excellent'; barPct = Math.min(100, ratio/8*100); barColor='#16a34a'; }
+    else if (ratio >= 3) { cls='pill-good'; label='● Good';     barPct = Math.min(100, ratio/8*100); barColor='#059669'; }
+    else if (ratio >= 1) { cls='pill-fair'; label='● Fair';     barPct = Math.min(100, ratio/8*100); barColor='#ca8a04'; }
+    else                 { barPct = Math.min(100, ratio/8*100); }
+  }
+  pill.className = 'health-pill ' + cls;
+  pill.textContent = label;
+  bar.style.width = barPct + '%';
+  bar.style.background = barColor;
+  document.getElementById('h-num').style.color = barColor;
+
+  // ── Charts ──
+  renderCharts(m);
+
+  // ── Sensitivity (reset) ──
+  resetSliders();
+
+  // ── Scenarios (pre-fill optimistic / pessimistic) ──
+  const pre = (id, val, dec=1) => { document.getElementById(id).value = val != null ? val.toFixed(dec) : ''; };
+  pre('sc-opt-cpa',   m.cpa   * 0.75, 0);
+  pre('sc-opt-arpu',  m.arpu  * 1.20, 0);
+  pre('sc-opt-churn', m.churnRate != null ? m.churnRate * 100 * 0.70 : 0);
+  pre('sc-opt-gm',    m.gm    != null ? Math.min(95, m.gm * 1.10) : 60);
+  pre('sc-pes-cpa',   m.cpa   * 1.35, 0);
+  pre('sc-pes-arpu',  m.arpu  * 0.80, 0);
+  pre('sc-pes-churn', m.churnRate != null ? m.churnRate * 100 * 1.60 : 0);
+  pre('sc-pes-gm',    m.gm    != null ? Math.max(5, m.gm * 0.85) : 40);
+  renderScenarios();
+
+  document.getElementById('sec-metrics').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ─── Charts ───────────────────────────────────────────────────────────────────
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function renderCharts(m) {
+  if (chartMetrics)   { chartMetrics.destroy();   chartMetrics   = null; }
+  if (chartBreakeven) { chartBreakeven.destroy();  chartBreakeven = null; }
+
+  const textColor   = cssVar('--text');
+  const mutedColor  = cssVar('--muted');
+  const borderColor = cssVar('--border');
+  const cardColor   = cssVar('--card');
+
+  const scaleOpts = {
+    grid:  { color: borderColor },
+    ticks: { color: mutedColor },
+  };
+
+  // Metrics bar chart
+  chartMetrics = new Chart(document.getElementById('ch-metrics'), {
+    type: 'bar',
+    data: {
+      labels: ['CPA', 'ARPU', 'RMC', 'EPC'],
+      datasets: [{
+        data: [m.cpa, m.arpu, m.rmc, m.epc],
+        backgroundColor: ['#6366f1','#10b981','#f59e0b','#3b82f6'],
+        borderRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => '$' + c.raw.toFixed(2) } } },
+      scales: { y: { ...scaleOpts, beginAtZero: true, ticks: { ...scaleOpts.ticks, callback: v => '$' + v } } }
+    }
+  });
+
+  // Breakeven line chart
+  const months = Array.from({length: 37}, (_, i) => i);
+  const cumulative = months.map(i => i === 0 ? -(m.cpa ?? 0) : -(m.cpa ?? 0) + (m.epc ?? 0) * i);
+  const bkPt = m.payback != null && m.payback <= 36 ? Math.round(m.payback) : null;
+
+  chartBreakeven = new Chart(document.getElementById('ch-breakeven'), {
+    type: 'line',
+    data: {
+      labels: months.map(i => 'M' + i),
+      datasets: [
+        {
+          label: 'Cumulative P&L / customer',
+          data: cumulative,
+          borderColor: '#4f46e5',
+          fill: {
+            target: { value: 0 },
+            above: 'rgba(16,185,129,.15)',
+            below: 'rgba(239,68,68,.1)',
+          },
+          tension: 0.3, pointRadius: 0, borderWidth: 2,
+        },
+        {
+          label: 'Break-even',
+          data: months.map(() => 0),
+          borderColor: mutedColor, borderDash: [5,4], pointRadius: 0, borderWidth: 1,
+        },
+        bkPt != null ? {
+          label: `Break-even ≈ ${f1(m.payback)} mo`,
+          data: months.map(i => i === bkPt ? cumulative[bkPt] : null),
+          type: 'scatter',
+          pointRadius: 8,
+          pointBackgroundColor: '#10b981',
+          pointBorderColor: cardColor,
+          pointBorderWidth: 2,
+          showLine: false,
+        } : null,
+      ].filter(Boolean),
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': $' + (c.raw ?? 0).toFixed(0) } }
+      },
+      scales: { y: { ...scaleOpts, ticks: { ...scaleOpts.ticks, callback: v => '$' + v } } }
+    }
+  });
+}
+
+// ─── Sensitivity ──────────────────────────────────────────────────────────────
+function sens() {
+  if (!B.arpu) return;
+  const sliders = [
+    { id:'sl-cpa',   badge:'sl-cpa-badge',   base:'sl-cpa-base',   adj:'sl-cpa-adj',   fmtB: fc, fmtA: fc,   suffix:'%', step: 1 },
+    { id:'sl-arpu',  badge:'sl-arpu-badge',  base:'sl-arpu-base',  adj:'sl-arpu-adj',  fmtB: fc, fmtA: fc,   suffix:'%', step: 1 },
+    { id:'sl-churn', badge:'sl-churn-badge', base:'sl-churn-base', adj:'sl-churn-adj', fmtB: fpct, fmtA: fpct, suffix:'%', step: 1 },
+    { id:'sl-gm',    badge:'sl-gm-badge',    base:'sl-gm-base',    adj:'sl-gm-adj',    fmtB: fpct, fmtA: fpct, suffix:' pp', step: 1 },
+  ];
+
+  const raw = id => parseInt(document.getElementById(id).value);
+  const cpaDelta  = raw('sl-cpa');
+  const arpuDelta = raw('sl-arpu');
+  const churnDelta= raw('sl-churn');
+  const gmDelta   = raw('sl-gm');
+
+  const adjCPA     = B.cpa   * (1 + cpaDelta  / 100);
+  const adjARPU    = B.arpu  * (1 + arpuDelta / 100);
+  const adjChurnR  = B.churnRate * (1 + churnDelta / 100);
+  const adjGM      = Math.min(99, Math.max(1, B.gm + gmDelta));
+
+  // EPC: variable costs scale with ARPU, fixed don't
+  const adjRMC     = B.rmc_fixed + B.rmc_var * (adjARPU / B.arpu);
+  const adjEPC     = adjARPU - adjRMC;
+  const adjLTV     = adjChurnR > 0 ? adjARPU * (adjGM / 100) / adjChurnR : null;
+  const adjPayback = (adjCPA > 0 && adjEPC > 0) ? adjCPA / adjEPC : null;
+  const adjRatio   = (adjLTV != null && adjCPA > 0) ? adjLTV / adjCPA : null;
+  const adjMRR     = adjARPU * B.totalCust;
+
+  // Update badges + meta
+  [['sl-cpa', cpaDelta, '%'], ['sl-arpu', arpuDelta, '%'], ['sl-churn', churnDelta, '%'], ['sl-gm', gmDelta, ' pp']].forEach(([id, val, sfx]) => {
+    setText(id+'-badge', (val >= 0 ? '+' : '') + val + sfx);
+  });
+  setText('sl-cpa-base',   fc(B.cpa));   setText('sl-cpa-adj',   fc(adjCPA));
+  setText('sl-arpu-base',  fc(B.arpu));  setText('sl-arpu-adj',  fc(adjARPU));
+  setText('sl-churn-base', fpct(B.churnRate * 100)); setText('sl-churn-adj', fpct(adjChurnR * 100));
+  setText('sl-gm-base',    fpct(B.gm));  setText('sl-gm-adj',    fpct(adjGM));
+
+  // Impact rows
+  setDelta('s-ltv',   B.ltv,     adjLTV,     fk,  true);
+  setDelta('s-pb',    B.payback, adjPayback, fmo, false); // lower payback is better
+  setDelta('s-epc',   B.epc,     adjEPC,     fc,  true);
+  setDelta('s-ratio', B.ratio,   adjRatio,   v => v != null ? f2(v)+':1' : '—', true);
+  setDelta('s-mrr',   B.mrr,     adjMRR,     fk,  true);
+
+  // Update slider track fills
+  ['sl-cpa','sl-arpu','sl-churn','sl-gm'].forEach(id => updateTrack(id));
+}
+
+function setDelta(prefix, base, adj, fmt, higherBetter) {
+  setText(prefix+'-b', fmt(base));
+  setText(prefix+'-n', fmt(adj));
+  const d = document.getElementById(prefix+'-d');
+  if (base == null || adj == null || !isFinite(adj)) { d.textContent='—'; d.className='delta-pill neu'; return; }
+  const pct = base !== 0 ? (adj - base) / Math.abs(base) * 100 : 0;
+  d.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+  const better = higherBetter ? pct > 0.05 : pct < -0.05;
+  const worse  = higherBetter ? pct < -0.05 : pct > 0.05;
+  d.className   = 'delta-pill ' + (better ? 'pos' : worse ? 'neg' : 'neu');
+}
+
+function updateTrack(id) {
+  const s = document.getElementById(id);
+  const pct = ((+s.value - +s.min) / (+s.max - +s.min)) * 100;
+  s.style.background = `linear-gradient(to right, var(--primary) ${pct}%, var(--border) ${pct}%)`;
+}
+
+function resetSliders() {
+  ['sl-cpa','sl-arpu','sl-churn','sl-gm'].forEach(id => { document.getElementById(id).value = 0; updateTrack(id); });
+  sens();
+}
+
+// ─── Scenarios ────────────────────────────────────────────────────────────────
+function renderScenarios() {
+  if (!B.cpa) return;
+  const g = id => parseFloat(document.getElementById(id).value);
+
+  // Base
+  renderScBlock('sc-base', B.cpa, B.arpu, B.churnRate != null ? B.churnRate*100 : 0, B.gm, B.epc, B.ltv, B.payback, B.ratio);
+
+  // Optimistic
+  const oCPA=g('sc-opt-cpa'), oARPU=g('sc-opt-arpu'), oChurn=g('sc-opt-churn'), oGM=g('sc-opt-gm');
+  const oRes = computeFrom(oCPA, oARPU, oChurn, oGM, B.rmc_fixed, B.rmc_var, B.arpu);
+  renderScBlock('sc-opt', oCPA, oARPU, oChurn, oGM, oRes.epc, oRes.ltv, oRes.payback, oRes.ratio);
+
+  // Pessimistic
+  const pCPA=g('sc-pes-cpa'), pARPU=g('sc-pes-arpu'), pChurn=g('sc-pes-churn'), pGM=g('sc-pes-gm');
+  const pRes = computeFrom(pCPA, pARPU, pChurn, pGM, B.rmc_fixed, B.rmc_var, B.arpu);
+  renderScBlock('sc-pes', pCPA, pARPU, pChurn, pGM, pRes.epc, pRes.ltv, pRes.payback, pRes.ratio);
+}
+
+function renderScBlock(id, cpa, arpu, churnPct, gm, epc, ltv, payback, ratio) {
+  document.getElementById(id).innerHTML = [
+    ['CPA',           fc(cpa)],
+    ['ARPU / mo',     fc(arpu)],
+    ['Churn Rate',    fpct(churnPct)],
+    ['Gross Margin',  fpct(gm)],
+    ['EPC / mo',      fc(epc)],
+    ['LTV',           fk(ltv)],
+    ['Payback',       fmo(payback)],
+    ['LTV : CPA',     ratio != null ? f2(ratio)+' : 1' : '—'],
+  ].map(([l,v]) => `
+    <div class="sc-res-row">
+      <span class="sc-res-lbl">${l}</span>
+      <span class="sc-res-val">${v}</span>
+    </div>`).join('');
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function setText(id, val) { document.getElementById(id).textContent = val; }
+
+// ─── Dark mode ────────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem('bm-theme', next);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-btn');
+  btn.textContent = theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+  // Re-render charts with new theme colours if they exist
+  if (B.cpa) renderCharts(B);
+}
+
+// Restore saved theme on load
+(function () {
+  const saved = localStorage.getItem('bm-theme') || 'light';
+  applyTheme(saved);
+})();
+</script>
+</body>
+</html>
