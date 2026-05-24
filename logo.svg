@@ -1,0 +1,22 @@
+<svg width="240" height="52" viewBox="0 0 240 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon mark -->
+  <rect width="52" height="52" rx="12" fill="url(#grad)"/>
+  <!-- Bars -->
+  <rect x="10" y="30" width="7" height="13" rx="2" fill="white" opacity="0.55"/>
+  <rect x="20" y="20" width="7" height="23" rx="2" fill="white" opacity="0.75"/>
+  <rect x="30" y="25" width="7" height="18" rx="2" fill="white" opacity="0.65"/>
+  <!-- Trend line -->
+  <polyline points="13.5,28 23.5,17 33.5,21 43,9" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="43" cy="9" r="3" fill="white"/>
+
+  <!-- Wordmark -->
+  <text x="64" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" fill="white" letter-spacing="-0.3">BusMetrics</text>
+  <text x="64" y="39" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500" fill="rgba(255,255,255,0.7)" letter-spacing="0.2">Business Metrics Dashboard</text>
+
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4338ca"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+</svg>
