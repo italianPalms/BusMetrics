@@ -197,6 +197,41 @@
     .sc-res-lbl { font-size: 12px; color: var(--muted); }
     .sc-res-val { font-size: 13px; font-weight: 600; }
 
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 6px; background: var(--card); border-radius: 12px;
+      padding: 6px; margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1; padding: 11px 20px; border: none; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: 600; transition: background .18s, color .18s, box-shadow .18s;
+      background: transparent; color: var(--muted);
+    }
+    .tab-btn:hover { background: var(--surface); color: var(--text); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #4338ca, #7c3aed); color: #fff;
+      box-shadow: 0 2px 8px rgba(79,70,229,.35);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Project tab specifics ── */
+    .proj-results-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px;
+    }
+    .proj-compare {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    @media (max-width: 700px) { .proj-compare { grid-template-columns: 1fr; } }
+    .compare-col { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; }
+    .compare-col-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+    .compare-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-lbl { font-size: 13px; color: var(--muted); }
+    .compare-val { font-size: 13px; font-weight: 700; }
+    .compare-val.better { color: #16a34a; }
+    .compare-val.worse  { color: #dc2626; }
+
     /* ── Dark mode toggle ── */
     .theme-btn {
       position: absolute; top: 28px; right: 32px;
@@ -223,6 +258,15 @@
     <p>Enter raw figures below — calculate CPA, ARPU, LTV, payback period &amp; more, then explore scenarios and sensitivity in real time.</p>
     <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark mode</button>
   </header>
+
+  <!-- ── TAB NAVIGATION ── -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('company')" id="tab-btn-company">🏢 Company / Department</button>
+    <button class="tab-btn"        onclick="switchTab('project')"  id="tab-btn-project">📋 Project Calculator</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ COMPANY TAB ══ -->
+  <div class="tab-pane active" id="tab-company">
 
   <!-- ── INPUTS ── -->
   <div class="card">
@@ -432,7 +476,111 @@
       </div>
 
     </div>
-  </div>
+  </div><!-- /sec-scenarios -->
+  </div><!-- /tab-company -->
+
+  <!-- ══════════════════════════════════════════════════════ PROJECT TAB ══ -->
+  <div class="tab-pane" id="tab-project">
+
+    <!-- Project Inputs -->
+    <div class="card">
+      <div class="card-title">Project Details</div>
+      <div class="inputs-grid">
+        <div class="igroup" style="grid-column: span 2;">
+          <label>Project Name</label>
+          <div class="ifield">
+            <input type="text" id="p_name" placeholder="e.g. Q3 Campaign" style="padding-left:12px;"
+              oninput="document.getElementById('p-name-display').textContent = this.value || 'Project'" />
+          </div>
+        </div>
+        <div class="igroup">
+          <label>Total Project Budget</label>
+          <div class="ifield"><span>$</span><input type="number" id="p_budget" value="50000" min="0" /></div>
+          <span class="hint">Total investment incl. team time</span>
+        </div>
+        <div class="igroup">
+          <label>Project Duration</label>
+          <div class="ifield"><input type="number" id="p_duration" value="12" min="1" style="padding-left:12px;" /></div>
+          <span class="hint">Months</span>
+        </div>
+        <div class="igroup">
+          <label>Expected New Customers</label>
+          <div class="ifield"><input type="number" id="p_customers" value="100" min="0" style="padding-left:12px;" /></div>
+          <span class="hint">Acquired through this project</span>
+        </div>
+        <div class="igroup">
+          <label>Revenue / Customer / Month</label>
+          <div class="ifield"><span>$</span><input type="number" id="p_arpu" value="100" min="0" /></div>
+          <span class="hint">ARPU for this segment</span>
+        </div>
+        <div class="igroup">
+          <label>Variable Cost / Customer / Month</label>
+          <div class="ifield"><span>$</span><input type="number" id="p_varCost" value="30" min="0" /></div>
+          <span class="hint">Serving cost per customer</span>
+        </div>
+        <div class="igroup">
+          <label>Monthly Fixed Project Overhead</label>
+          <div class="ifield"><span>$</span><input type="number" id="p_fixedMo" value="2000" min="0" /></div>
+          <span class="hint">Staff, tools, etc. during project</span>
+        </div>
+        <div class="igroup">
+          <label>Monthly Churn Rate</label>
+          <div class="ifield"><input type="number" id="p_churn" value="2" step="0.1" min="0" max="100" style="padding-left:12px;" /></div>
+          <span class="hint">% of customers lost per month</span>
+        </div>
+      </div>
+      <button class="btn-calc" onclick="calculateProject()">Calculate Project</button>
+    </div>
+
+    <!-- Project Results -->
+    <div class="hidden" id="p-sec-results">
+
+      <div class="card">
+        <div class="card-title">
+          <span id="p-name-display">Project</span> — Key Metrics
+        </div>
+        <div class="proj-results-grid">
+          <div class="mc"><div class="mc-label">Project CPA</div><div class="mc-val" id="p-cpa">—</div><div class="mc-unit">cost per customer</div></div>
+          <div class="mc"><div class="mc-label">Monthly Revenue</div><div class="mc-val" id="p-mrr">—</div><div class="mc-unit">at full acquisition</div></div>
+          <div class="mc"><div class="mc-label">Monthly Profit</div><div class="mc-val" id="p-mprofit">—</div><div class="mc-unit">after all costs</div></div>
+          <div class="mc"><div class="mc-label">Break-even</div><div class="mc-val" id="p-breakeven">—</div><div class="mc-unit">months to recover budget</div></div>
+          <div class="mc"><div class="mc-label">Total Revenue</div><div class="mc-val" id="p-total-rev">—</div><div class="mc-unit">over project duration</div></div>
+          <div class="mc"><div class="mc-label">Total Cost</div><div class="mc-val" id="p-total-cost">—</div><div class="mc-unit">budget + running costs</div></div>
+          <div class="mc"><div class="mc-label">Net Profit</div><div class="mc-val" id="p-net">—</div><div class="mc-unit">over project duration</div></div>
+          <div class="mc"><div class="mc-label">ROI</div><div class="mc-val" id="p-roi">—</div><div class="mc-unit">return on investment</div></div>
+          <div class="mc"><div class="mc-label">LTV (segment)</div><div class="mc-val" id="p-ltv">—</div><div class="mc-unit">lifetime value</div></div>
+          <div class="mc"><div class="mc-label">LTV : CPA</div><div class="mc-val" id="p-ratio">—</div><div class="mc-unit">health ratio</div></div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card">
+        <div class="card-title">Project P&amp;L Timeline</div>
+        <div class="chart-subtitle">Cumulative revenue, costs and net profit over project duration</div>
+        <div class="chart-wrap" style="height:320px;"><canvas id="ch-project"></canvas></div>
+      </div>
+
+      <!-- Comparison with company -->
+      <div class="card" id="p-sec-compare">
+        <div class="card-title">Project vs. Company Baseline <span class="badge">Comparison</span></div>
+        <div id="p-compare-note" class="hidden" style="font-size:13px; color:var(--muted); font-style:italic; margin-bottom:16px;">
+          Calculate the Company tab first to enable the full comparison.
+        </div>
+        <div class="proj-compare">
+          <div class="compare-col">
+            <div class="compare-col-title">📋 This Project</div>
+            <div id="p-col-project"></div>
+          </div>
+          <div class="compare-col">
+            <div class="compare-col-title">🏢 Company Baseline</div>
+            <div id="p-col-company"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /p-sec-results -->
+
+  </div><!-- /tab-project -->
 
 </div><!-- /app -->
 
@@ -750,6 +898,141 @@ function renderScBlock(id, cpa, arpu, churnPct, gm, epc, ltv, payback, ratio) {
       <span class="sc-res-lbl">${l}</span>
       <span class="sc-res-val">${v}</span>
     </div>`).join('');
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(name) {
+  ['company','project'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+    document.getElementById('tab-btn-' + t).classList.toggle('active', t === name);
+  });
+}
+
+// ─── Project calculation ──────────────────────────────────────────────────────
+let chartProject = null;
+
+function calculateProject() {
+  const g  = id => parseFloat(document.getElementById(id).value) || 0;
+  const gs = id => document.getElementById(id).value.trim();
+
+  const budget    = g('p_budget');
+  const duration  = Math.max(1, g('p_duration'));
+  const customers = g('p_customers');
+  const arpu      = g('p_arpu');
+  const varCost   = g('p_varCost');
+  const fixedMo   = g('p_fixedMo');
+  const churnPct  = g('p_churn');
+
+  const churnRate     = churnPct / 100;
+  const projCPA       = customers > 0 ? budget / customers : null;
+  const monthlyRev    = arpu * customers;
+  const monthlyVarCost= varCost * customers;
+  const monthlyProfit = monthlyRev - monthlyVarCost - fixedMo;
+  const breakeven     = (projCPA != null && monthlyProfit > 0) ? budget / monthlyProfit : null;
+  const totalRev      = monthlyRev * duration;
+  const totalRunCost  = (monthlyVarCost + fixedMo) * duration;
+  const totalCost     = budget + totalRunCost;
+  const netProfit     = totalRev - totalCost;
+  const roi           = budget > 0 ? (netProfit / budget) * 100 : null;
+  const gm            = arpu > 0 ? (arpu - varCost) / arpu * 100 : null;
+  const ltv           = (churnRate > 0 && gm != null) ? arpu * (gm / 100) / churnRate : null;
+  const ratio         = (ltv != null && projCPA > 0) ? ltv / projCPA : null;
+
+  // Reveal results
+  document.getElementById('p-sec-results').classList.remove('hidden');
+
+  // Fill metric cards
+  setText('p-cpa',        fc(projCPA));
+  setText('p-mrr',        fk(monthlyRev));
+  setText('p-mprofit',    fk(monthlyProfit));
+  setText('p-breakeven',  fmo(breakeven));
+  setText('p-total-rev',  fk(totalRev));
+  setText('p-total-cost', fk(totalCost));
+
+  const netEl = document.getElementById('p-net');
+  netEl.textContent = fk(netProfit);
+  netEl.style.color = netProfit >= 0 ? '#10b981' : '#ef4444';
+
+  const roiEl = document.getElementById('p-roi');
+  roiEl.textContent = roi != null ? (roi >= 0 ? '+' : '') + f1(roi) + '%' : '—';
+  roiEl.style.color = roi != null ? (roi >= 0 ? '#10b981' : '#ef4444') : '';
+
+  setText('p-ltv',   fk(ltv));
+  setText('p-ratio', ratio != null ? f2(ratio) + ' : 1' : '—');
+
+  // Project P&L chart
+  if (chartProject) { chartProject.destroy(); chartProject = null; }
+  const mutedColor  = cssVar('--muted');
+  const borderColor = cssVar('--border');
+  const scaleOpts   = { grid: { color: borderColor }, ticks: { color: mutedColor } };
+
+  const months  = Array.from({length: duration + 1}, (_, i) => i);
+  const cumRev  = months.map(i => monthlyRev * i);
+  const cumCost = months.map(i => budget + (monthlyVarCost + fixedMo) * i);
+  const cumNet  = months.map(i => cumRev[i] - cumCost[i]);
+
+  chartProject = new Chart(document.getElementById('ch-project'), {
+    type: 'line',
+    data: {
+      labels: months.map(i => 'M' + i),
+      datasets: [
+        { label: 'Cumulative Revenue', data: cumRev,  borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Cumulative Cost',    data: cumCost, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.06)',  fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Net Profit',         data: cumNet,  borderColor: '#4f46e5', borderDash: [5,4], tension: 0.3, pointRadius: 0, borderWidth: 2, fill: false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: mutedColor, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fk(c.raw) } }
+      },
+      scales: {
+        x: { ...scaleOpts },
+        y: { ...scaleOpts, ticks: { ...scaleOpts.ticks, callback: v => fk(v) } }
+      }
+    }
+  });
+
+  // Comparison with company baseline
+  const hasCompany = !!B.cpa;
+  document.getElementById('p-compare-note').classList.toggle('hidden', hasCompany);
+
+  const pRows = [
+    ['CPA',           fc(projCPA)],
+    ['ARPU / mo',     fc(arpu)],
+    ['Monthly Profit',fk(monthlyProfit)],
+    ['LTV',           fk(ltv)],
+    ['LTV : CPA',     ratio != null ? f2(ratio)+' : 1' : '—'],
+    ['Gross Margin',  fpct(gm)],
+    ['Churn Rate',    fpct(churnPct)],
+    ['Break-even',    fmo(breakeven)],
+  ];
+
+  const cRows = hasCompany ? [
+    ['CPA',           fc(B.cpa),    projCPA,   B.cpa,    false],
+    ['ARPU / mo',     fc(B.arpu),   arpu,      B.arpu,   true],
+    ['EPC / mo',      fc(B.epc),    monthlyProfit, B.epc, true],
+    ['LTV',           fk(B.ltv),    ltv,       B.ltv,    true],
+    ['LTV : CPA',     B.ratio != null ? f2(B.ratio)+' : 1' : '—', ratio, B.ratio, true],
+    ['Gross Margin',  fpct(B.gm),   gm,        B.gm,     true],
+    ['Churn Rate',    fpct(B.churnRate != null ? B.churnRate*100 : null), churnPct, B.churnRate*100, false],
+    ['Payback',       fmo(B.payback), breakeven, B.payback, false],
+  ] : pRows.map(([l, v]) => [l, '—', null, null, true]);
+
+  document.getElementById('p-col-project').innerHTML = pRows.map(([l,v]) => `
+    <div class="compare-row"><span class="compare-lbl">${l}</span><span class="compare-val">${v}</span></div>`).join('');
+
+  document.getElementById('p-col-company').innerHTML = cRows.map(([l, v, projVal, compVal, higherBetter]) => {
+    let cls = '';
+    if (hasCompany && projVal != null && compVal != null) {
+      const better = higherBetter ? projVal > compVal : projVal < compVal;
+      cls = better ? 'better' : (projVal === compVal ? '' : 'worse');
+    }
+    return `<div class="compare-row"><span class="compare-lbl">${l}</span><span class="compare-val ${cls}">${v}</span></div>`;
+  }).join('');
+
+  document.getElementById('p-sec-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
