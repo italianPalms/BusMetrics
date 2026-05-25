@@ -5,66 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Business Metrics Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-faint: #ede9fe;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --bg: #f1f5f9;
+      --primary: #1B2A47;
+      --primary-hover: #243761;
+      --primary-faint: #E8ECF5;
+      --accent: #E0000F;
+      --accent-hover: #B5000C;
+      --success: #00875A;
+      --warning: #F59E0B;
+      --danger: #DC2626;
+      --bg: #EEF1F7;
       --card: #ffffff;
-      --surface: #f8fafc;
-      --input-bg: #fafafa;
-      --border: #e2e8f0;
-      --text: #1e293b;
-      --muted: #64748b;
-      --neu-bg: #f1f5f9;
-      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-      --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+      --surface: #F5F7FB;
+      --input-bg: #ffffff;
+      --border: #D6DCE8;
+      --text: #0F1924;
+      --muted: #566278;
+      --neu-bg: #EEF1F7;
+      --shadow: 0 1px 3px rgba(15,25,36,.07), 0 1px 2px rgba(15,25,36,.05);
+      --shadow-md: 0 4px 16px rgba(15,25,36,.11);
     }
     [data-theme="dark"] {
-      --primary: #818cf8;
-      --primary-faint: #1e1b4b;
-      --bg: #0f172a;
-      --card: #1e293b;
-      --surface: #263348;
-      --input-bg: #1a2840;
-      --border: #334155;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --neu-bg: #1e293b;
+      --primary: #4A6FA5;
+      --primary-hover: #5A82BA;
+      --primary-faint: #0D1B30;
+      --accent: #FF2233;
+      --accent-hover: #E0000F;
+      --bg: #0A0F1A;
+      --card: #111827;
+      --surface: #1A2333;
+      --input-bg: #141E2E;
+      --border: #243047;
+      --text: #E8EDF5;
+      --muted: #7A90B0;
+      --neu-bg: #111827;
       --shadow: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
       --shadow-md: 0 4px 12px rgba(0,0,0,.5);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg); color: var(--text); line-height: 1.5;
       transition: background .25s, color .25s;
     }
-    .app { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    .app { max-width: 1400px; margin: 0 auto; padding: 0; }
 
     /* ── Header ── */
     header {
-      background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
-      color: #fff; padding: 32px 36px; border-radius: 16px; margin-bottom: 24px; box-shadow: var(--shadow-md);
+      background: var(--primary);
+      color: #fff; padding: 22px 36px; margin-bottom: 0; box-shadow: 0 2px 8px rgba(15,25,36,.18);
     }
-    header h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
-    header p  { opacity: .82; font-size: 14px; }
+    header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    header p  { opacity: .72; font-size: 13px; }
+    .app-body { padding: 28px 36px; }
 
     /* ── Section card ── */
     .card {
-      background: var(--card); border-radius: 12px; padding: 24px;
-      margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
+      background: var(--card); border-radius: 6px; padding: 24px;
+      margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border);
     }
     .card-title {
-      font-size: 17px; font-weight: 600; margin-bottom: 20px;
+      font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--primary);
       display: flex; align-items: center; gap: 8px;
     }
     .badge {
       font-size: 11px; font-weight: 600; padding: 2px 9px;
-      border-radius: 20px; background: var(--primary-faint); color: var(--primary);
+      border-radius: 3px; background: var(--primary-faint); color: var(--primary);
     }
 
     /* ── Inputs ── */
@@ -80,31 +89,33 @@
     .ifield span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
     .ifield input {
       width: 100%; padding: 9px 10px 9px 22px; border: 1.5px solid var(--border);
-      border-radius: 8px; font-size: 15px; color: var(--text); background: var(--input-bg);
+      border-radius: 4px; font-size: 14px; color: var(--text); background: var(--input-bg);
       transition: border-color .18s, box-shadow .18s, background .25s;
     }
-    .ifield input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); background: var(--card); }
+    .ifield input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(27,42,71,.12); background: var(--card); }
 
     .btn-calc {
-      background: linear-gradient(135deg, #4338ca, #7c3aed); color: #fff;
-      border: none; padding: 11px 30px; border-radius: 8px; font-size: 14px;
-      font-weight: 600; cursor: pointer; transition: opacity .18s, transform .1s;
+      background: var(--accent); color: #fff;
+      border: none; padding: 11px 32px; border-radius: 4px; font-size: 14px;
+      font-weight: 700; cursor: pointer; letter-spacing: .01em;
+      transition: background .18s, transform .1s;
     }
-    .btn-calc:hover  { opacity: .9; transform: translateY(-1px); }
+    .btn-calc:hover  { background: var(--accent-hover); transform: translateY(-1px); }
     .btn-calc:active { transform: translateY(0); }
 
     /* ── Metric Cards ── */
     .metrics-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 14px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px;
     }
     .mc {
-      background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 14px 16px; transition: transform .18s, box-shadow .18s;
+      background: var(--card); border: 1px solid var(--border); border-radius: 5px;
+      padding: 16px; transition: box-shadow .18s;
+      border-top: 3px solid var(--primary);
     }
-    .mc:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .mc-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
-    .mc-val   { font-size: 22px; font-weight: 700; color: var(--text); }
-    .mc-unit  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .mc:hover { box-shadow: var(--shadow-md); }
+    .mc-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+    .mc-val   { font-size: 24px; font-weight: 800; color: var(--primary); }
+    .mc-unit  { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
     /* ── Health ── */
     .health-bar {
@@ -176,11 +187,11 @@
     /* ── Scenarios ── */
     .scenarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     @media (max-width: 800px) { .scenarios-grid { grid-template-columns: 1fr; } }
-    .sc { border: 2px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .sc { border: 1.5px solid var(--border); border-radius: 5px; overflow: hidden; }
     .sc.base { border-color: var(--primary); }
     .sc.opt  { border-color: var(--success); }
     .sc.pes  { border-color: var(--danger);  }
-    .sc-head { padding: 11px 16px; text-align: center; font-weight: 700; font-size: 13px; }
+    .sc-head { padding: 10px 16px; text-align: center; font-weight: 700; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
     .sc.base .sc-head { background: var(--primary); color: #fff; }
     .sc.opt  .sc-head { background: var(--success);  color: #fff; }
     .sc.pes  .sc-head { background: var(--danger);   color: #fff; }
@@ -199,18 +210,20 @@
 
     /* ── Tabs ── */
     .tabs {
-      display: flex; gap: 6px; background: var(--card); border-radius: 12px;
-      padding: 6px; margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
+      display: flex; gap: 0; background: var(--primary);
+      padding: 0 36px; margin-bottom: 0; border-bottom: none;
     }
     .tab-btn {
-      flex: 1; padding: 11px 20px; border: none; border-radius: 8px; cursor: pointer;
-      font-size: 14px; font-weight: 600; transition: background .18s, color .18s, box-shadow .18s;
-      background: transparent; color: var(--muted);
+      padding: 14px 24px; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; letter-spacing: .02em;
+      transition: background .18s, color .18s;
+      background: transparent; color: rgba(255,255,255,.6);
+      border-bottom: 3px solid transparent; margin-bottom: -1px;
     }
-    .tab-btn:hover { background: var(--surface); color: var(--text); }
+    .tab-btn:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
     .tab-btn.active {
-      background: linear-gradient(135deg, #4338ca, #7c3aed); color: #fff;
-      box-shadow: 0 2px 8px rgba(79,70,229,.35);
+      color: #fff; border-bottom: 3px solid var(--accent);
+      background: rgba(255,255,255,.1);
     }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
@@ -231,7 +244,8 @@
     }
     .btn-sm:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
     .btn-sm:disabled { opacity: .38; cursor: not-allowed; }
-    .btn-sm.save { background: linear-gradient(135deg,#4338ca,#7c3aed); color:#fff; border-color:transparent; }
+    .btn-sm.save { background: var(--accent); color:#fff; border-color:transparent; }
+    .btn-sm.save:hover { background: var(--accent-hover); opacity: 1; }
     .btn-sm.save:hover { opacity: .88; }
     .btn-sm.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
     .proj-toast {
@@ -262,17 +276,81 @@
 
     /* ── Dark mode toggle ── */
     .theme-btn {
-      position: absolute; top: 28px; right: 32px;
-      background: rgba(255,255,255,.15); border: 1.5px solid rgba(255,255,255,.3);
-      color: #fff; padding: 7px 14px; border-radius: 8px; cursor: pointer;
-      font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+      position: absolute; top: 50%; right: 36px; transform: translateY(-50%);
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.85); padding: 6px 14px; border-radius: 4px; cursor: pointer;
+      font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;
       transition: background .2s;
     }
-    .theme-btn:hover { background: rgba(255,255,255,.25); }
+    .theme-btn:hover { background: rgba(255,255,255,.22); }
     header { position: relative; }
 
     /* ── Hidden ── */
     .hidden { display: none !important; }
+
+    /* ── Metric info modal ── */
+    .mc { cursor: pointer; }
+    .mc:hover { box-shadow: var(--shadow-md); border-top-color: var(--accent); }
+    .mc:hover .mc-label { color: var(--primary); }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(10,15,28,.55); backdrop-filter: blur(3px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.open { display: flex; animation: fadeInOverlay .18s ease; }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-box {
+      background: var(--card); border-radius: 10px; width: 100%; max-width: 460px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: slideUp .2s ease;
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-header {
+      background: var(--primary); padding: 18px 22px 16px;
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .modal-header-left { display: flex; flex-direction: column; gap: 4px; }
+    .modal-abbr { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.6); letter-spacing: .1em; text-transform: uppercase; }
+    .modal-title { font-size: 17px; font-weight: 700; color: #fff; }
+    .modal-current { font-size: 28px; font-weight: 800; color: #fff; margin-top: 6px; }
+    .modal-close {
+      background: rgba(255,255,255,.15); border: none; color: #fff;
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+      font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;
+      transition: background .15s; flex-shrink: 0; margin-left: 12px;
+    }
+    .modal-close:hover { background: rgba(255,255,255,.3); }
+
+    .modal-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; }
+
+    .modal-formula-block {
+      background: var(--primary-faint); border-radius: 6px; padding: 14px 16px;
+      border-left: 3px solid var(--primary);
+    }
+    .modal-formula-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .modal-formula-text { font-size: 14px; font-weight: 600; color: var(--primary); font-family: 'Courier New', monospace; }
+
+    .modal-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    .modal-calc { display: flex; flex-direction: column; gap: 0; }
+    .modal-calc-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .calc-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .calc-row:last-child { border-bottom: none; }
+    .calc-row.result {
+      margin-top: 4px; padding-top: 10px; border-top: 2px solid var(--primary);
+      border-bottom: none; font-weight: 700;
+    }
+    .calc-row.result .calc-lbl { color: var(--primary); font-size: 14px; }
+    .calc-row.result .calc-num { color: var(--primary); font-size: 15px; }
+    .calc-op { font-size: 15px; color: var(--muted); font-weight: 700; margin-right: 8px; min-width: 14px; text-align: center; }
+    .calc-lbl { color: var(--text); }
+    .calc-num { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
   </style>
 </head>
 <body>
@@ -288,13 +366,14 @@
   </header>
 
   <!-- ── TAB NAVIGATION ── -->
-  <div class="tabs">
+  <div class="tabs" style="margin-bottom:0;">
     <button class="tab-btn active" onclick="switchTab('company')" id="tab-btn-company">🏢 Company / Department</button>
     <button class="tab-btn"        onclick="switchTab('project')"  id="tab-btn-project">📋 Project Calculator</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════ COMPANY TAB ══ -->
   <div class="tab-pane active" id="tab-company">
+  <div class="app-body">
 
   <!-- ── INPUTS ── -->
   <div class="card">
@@ -343,16 +422,16 @@
   <div class="card hidden" id="sec-metrics">
     <div class="card-title">Calculated Metrics</div>
     <div class="metrics-grid">
-      <div class="mc"><div class="mc-label">CPA</div><div class="mc-val" id="mc-cpa">—</div><div class="mc-unit">per new customer</div></div>
-      <div class="mc"><div class="mc-label">ARPU</div><div class="mc-val" id="mc-arpu">—</div><div class="mc-unit">per customer / mo</div></div>
-      <div class="mc"><div class="mc-label">RMC</div><div class="mc-val" id="mc-rmc">—</div><div class="mc-unit">recurring cost / customer</div></div>
-      <div class="mc"><div class="mc-label">EPC</div><div class="mc-val" id="mc-epc">—</div><div class="mc-unit">earnings / customer / mo</div></div>
-      <div class="mc"><div class="mc-label">Payback Period</div><div class="mc-val" id="mc-payback">—</div><div class="mc-unit">months to recover CPA</div></div>
-      <div class="mc"><div class="mc-label">LTV</div><div class="mc-val" id="mc-ltv">—</div><div class="mc-unit">lifetime value</div></div>
-      <div class="mc"><div class="mc-label">Churn Rate</div><div class="mc-val" id="mc-churn">—</div><div class="mc-unit">monthly</div></div>
-      <div class="mc"><div class="mc-label">Gross Margin</div><div class="mc-val" id="mc-gm">—</div><div class="mc-unit">% of revenue</div></div>
-      <div class="mc"><div class="mc-label">MRR</div><div class="mc-val" id="mc-mrr">—</div><div class="mc-unit">monthly recurring rev.</div></div>
-      <div class="mc"><div class="mc-label">ARR</div><div class="mc-val" id="mc-arr">—</div><div class="mc-unit">annual recurring rev.</div></div>
+      <div class="mc" onclick="showMetricInfo('cpa')"><div class="mc-label">CPA</div><div class="mc-val" id="mc-cpa">—</div><div class="mc-unit">per new customer</div></div>
+      <div class="mc" onclick="showMetricInfo('arpu')"><div class="mc-label">ARPU</div><div class="mc-val" id="mc-arpu">—</div><div class="mc-unit">per customer / mo</div></div>
+      <div class="mc" onclick="showMetricInfo('rmc')"><div class="mc-label">RMC</div><div class="mc-val" id="mc-rmc">—</div><div class="mc-unit">recurring cost / customer</div></div>
+      <div class="mc" onclick="showMetricInfo('epc')"><div class="mc-label">EPC</div><div class="mc-val" id="mc-epc">—</div><div class="mc-unit">earnings / customer / mo</div></div>
+      <div class="mc" onclick="showMetricInfo('payback')"><div class="mc-label">Payback Period</div><div class="mc-val" id="mc-payback">—</div><div class="mc-unit">time to recover CPA</div></div>
+      <div class="mc" onclick="showMetricInfo('ltv')"><div class="mc-label">LTV</div><div class="mc-val" id="mc-ltv">—</div><div class="mc-unit">lifetime value</div></div>
+      <div class="mc" onclick="showMetricInfo('churn')"><div class="mc-label">Churn Rate</div><div class="mc-val" id="mc-churn">—</div><div class="mc-unit">monthly</div></div>
+      <div class="mc" onclick="showMetricInfo('gm')"><div class="mc-label">Gross Margin</div><div class="mc-val" id="mc-gm">—</div><div class="mc-unit">% of revenue</div></div>
+      <div class="mc" onclick="showMetricInfo('mrr')"><div class="mc-label">MRR</div><div class="mc-val" id="mc-mrr">—</div><div class="mc-unit">monthly recurring rev.</div></div>
+      <div class="mc" onclick="showMetricInfo('arr')"><div class="mc-label">ARR</div><div class="mc-val" id="mc-arr">—</div><div class="mc-unit">annual recurring rev.</div></div>
     </div>
   </div>
 
@@ -505,10 +584,12 @@
 
     </div>
   </div><!-- /sec-scenarios -->
+  </div><!-- /app-body -->
   </div><!-- /tab-company -->
 
   <!-- ══════════════════════════════════════════════════════ PROJECT TAB ══ -->
   <div class="tab-pane" id="tab-project">
+  <div class="app-body">
 
     <!-- ── Project Manager ── -->
     <div class="card">
@@ -624,6 +705,7 @@
 
     </div><!-- /p-sec-results -->
 
+  </div><!-- /app-body -->
   </div><!-- /tab-project -->
 
 </div><!-- /app -->
@@ -645,7 +727,15 @@ const fk  = v => {
   if (Math.abs(v) >= 1e3) return '$' + (v/1e3).toFixed(1) + 'K';
   return '$' + f0(v);
 };
-const fmo = v => N(v) == null ? '—' : (v > 999 ? '∞' : f1(v) + ' mo');
+const fmo = v => {
+  if (N(v) == null) return '—';
+  if (v > 999) return '∞';
+  if (v < 12) return f1(v) + ' mo';
+  const yrs = Math.floor(v / 12);
+  const mos = Math.round(v % 12);
+  const yrStr = yrs + (yrs === 1 ? ' yr' : ' yrs');
+  return mos === 0 ? yrStr : yrStr + ' ' + mos + ' mo';
+};
 const fpct= v => N(v) == null ? '—' : f1(v) + '%';
 
 // ─── Core calculation ─────────────────────────────────────────────────────────
@@ -814,7 +904,7 @@ function renderCharts(m) {
           borderColor: mutedColor, borderDash: [5,4], pointRadius: 0, borderWidth: 1,
         },
         bkPt != null ? {
-          label: `Break-even ≈ ${f1(m.payback)} mo`,
+          label: `Break-even ≈ ${fmo(m.payback)}`,
           data: months.map(i => i === bkPt ? cumulative[bkPt] : null),
           type: 'scatter',
           pointRadius: 8,
@@ -1227,6 +1317,200 @@ function applyTheme(theme) {
   const saved = localStorage.getItem('bm-theme') || 'light';
   applyTheme(saved);
 })();
+
+// ─── Metric info modal ────────────────────────────────────────────────────────
+const METRIC_DEFS = {
+  cpa: {
+    abbr: 'CPA',
+    name: 'Cost Per Acquisition',
+    formula: 'Acquisition Spend ÷ New Customers',
+    desc: 'How much it costs, on average, to acquire one new paying customer. This includes all marketing and sales spend in the period.',
+    rows: () => [
+      { op: '',  lbl: 'Acquisition Spend',   num: fc(B.acqSpend) },
+      { op: '÷', lbl: 'New Customers',        num: f0(B.newCust)  },
+    ],
+    result: () => fc(B.cpa),
+    resultLbl: 'CPA',
+  },
+  arpu: {
+    abbr: 'ARPU',
+    name: 'Average Revenue Per User',
+    formula: 'Monthly Revenue ÷ Total Active Customers',
+    desc: 'The average revenue generated per active customer each month. A rising ARPU indicates stronger monetisation or upselling.',
+    rows: () => [
+      { op: '',  lbl: 'Monthly Revenue',         num: fc(B.revenue)   },
+      { op: '÷', lbl: 'Total Active Customers',  num: f0(B.totalCust) },
+    ],
+    result: () => fc(B.arpu),
+    resultLbl: 'ARPU',
+  },
+  rmc: {
+    abbr: 'RMC',
+    name: 'Recurring Monthly Cost per Customer',
+    formula: '(Monthly COGS + Monthly Fixed Costs) ÷ Total Active Customers',
+    desc: 'The total cost burden of serving one customer each month, blending variable costs (COGS) and allocated fixed overhead.',
+    rows: () => [
+      { op: '',  lbl: 'Monthly COGS',            num: fc(B.cogs)      },
+      { op: '+', lbl: 'Monthly Fixed Costs',     num: fc(B.fixed)     },
+      { op: '÷', lbl: 'Total Active Customers',  num: f0(B.totalCust) },
+    ],
+    result: () => fc(B.rmc),
+    resultLbl: 'RMC',
+  },
+  epc: {
+    abbr: 'EPC',
+    name: 'Earnings Per Customer',
+    formula: 'ARPU − RMC',
+    desc: 'Net monthly profit generated per active customer after covering their share of all costs. Positive EPC means each customer is profitable.',
+    rows: () => [
+      { op: '',  lbl: 'ARPU',  num: fc(B.arpu) },
+      { op: '−', lbl: 'RMC',   num: fc(B.rmc)  },
+    ],
+    result: () => fc(B.epc),
+    resultLbl: 'EPC',
+  },
+  payback: {
+    abbr: 'Payback',
+    name: 'Payback Period',
+    formula: 'CPA ÷ EPC',
+    desc: 'How long it takes for the cumulative earnings from a customer to recover their acquisition cost. Shorter is better — ideally under 12 months.',
+    rows: () => [
+      { op: '',  lbl: 'CPA',  num: fc(B.cpa) },
+      { op: '÷', lbl: 'EPC',  num: fc(B.epc) },
+    ],
+    result: () => fmo(B.payback),
+    resultLbl: 'Payback Period',
+  },
+  ltv: {
+    abbr: 'LTV',
+    name: 'Lifetime Value',
+    formula: 'ARPU × Gross Margin % ÷ Monthly Churn Rate',
+    desc: 'The expected total profit a business earns from a customer over their entire relationship. Higher LTV relative to CPA means a healthier business model.',
+    rows: () => [
+      { op: '',  lbl: 'ARPU',              num: fc(B.arpu)                                       },
+      { op: '×', lbl: 'Gross Margin',      num: fpct(B.gm)                                       },
+      { op: '÷', lbl: 'Monthly Churn Rate',num: fpct(B.churnRate != null ? B.churnRate * 100 : null) },
+    ],
+    result: () => fk(B.ltv),
+    resultLbl: 'LTV',
+  },
+  churn: {
+    abbr: 'Churn',
+    name: 'Monthly Churn Rate',
+    formula: 'Churned Customers ÷ Total Active Customers × 100',
+    desc: 'The percentage of customers lost each month. High churn erodes LTV and increases the pressure on new customer acquisition.',
+    rows: () => [
+      { op: '',  lbl: 'Churned Customers',       num: f0(B.churnCust) },
+      { op: '÷', lbl: 'Total Active Customers',  num: f0(B.totalCust) },
+      { op: '×', lbl: '100',                     num: ''              },
+    ],
+    result: () => fpct(B.churnRate != null ? B.churnRate * 100 : null),
+    resultLbl: 'Churn Rate',
+  },
+  gm: {
+    abbr: 'GM',
+    name: 'Gross Margin',
+    formula: '(Revenue − COGS) ÷ Revenue × 100',
+    desc: 'The percentage of revenue remaining after variable costs (COGS). Gross margin funds fixed costs, R&D, and profit.',
+    rows: () => [
+      { op: '',  lbl: 'Monthly Revenue', num: fc(B.revenue) },
+      { op: '−', lbl: 'Monthly COGS',   num: fc(B.cogs)    },
+      { op: '÷', lbl: 'Monthly Revenue',num: fc(B.revenue) },
+      { op: '×', lbl: '100',            num: ''            },
+    ],
+    result: () => fpct(B.gm),
+    resultLbl: 'Gross Margin',
+  },
+  mrr: {
+    abbr: 'MRR',
+    name: 'Monthly Recurring Revenue',
+    formula: 'Monthly Revenue (direct from inputs)',
+    desc: 'Total recurring revenue for the current month. MRR is the heartbeat metric for subscription and recurring-revenue businesses.',
+    rows: () => [
+      { op: '', lbl: 'Monthly Revenue', num: fc(B.revenue) },
+    ],
+    result: () => fk(B.mrr),
+    resultLbl: 'MRR',
+  },
+  arr: {
+    abbr: 'ARR',
+    name: 'Annual Recurring Revenue',
+    formula: 'MRR × 12',
+    desc: 'Annualised recurring revenue — a forward-looking view of the business scale. Assumes the current MRR is maintained for a full year.',
+    rows: () => [
+      { op: '',  lbl: 'MRR', num: fk(B.mrr) },
+      { op: '×', lbl: '12',  num: ''         },
+    ],
+    result: () => fk(B.arr),
+    resultLbl: 'ARR',
+  },
+};
+
+function showMetricInfo(key) {
+  const def = METRIC_DEFS[key];
+  if (!def || B.cpa == null) return; // not yet calculated
+
+  const rows = def.rows();
+  const rowsHtml = rows.map((r, i) => `
+    <div class="calc-row">
+      <span style="display:flex;align-items:center;gap:0">
+        <span class="calc-op">${r.op}</span>
+        <span class="calc-lbl">${r.lbl}</span>
+      </span>
+      <span class="calc-num">${r.num}</span>
+    </div>`).join('');
+
+  document.getElementById('metric-modal-abbr').textContent    = def.abbr;
+  document.getElementById('metric-modal-title').textContent   = def.name;
+  document.getElementById('metric-modal-current').textContent = def.result();
+  document.getElementById('metric-modal-formula').textContent = def.formula;
+  document.getElementById('metric-modal-desc').textContent    = def.desc;
+  document.getElementById('metric-modal-rows').innerHTML      = rowsHtml;
+  document.getElementById('metric-modal-result-lbl').textContent = def.resultLbl;
+  document.getElementById('metric-modal-result-num').textContent = def.result();
+
+  document.getElementById('metric-modal').classList.add('open');
+  document.addEventListener('keydown', _modalEsc);
+}
+
+function closeMetricModal() {
+  document.getElementById('metric-modal').classList.remove('open');
+  document.removeEventListener('keydown', _modalEsc);
+}
+
+function _modalEsc(e) { if (e.key === 'Escape') closeMetricModal(); }
 </script>
+
+<!-- ── Metric info modal ── -->
+<div class="modal-overlay" id="metric-modal" onclick="if(event.target===this)closeMetricModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <span class="modal-abbr" id="metric-modal-abbr"></span>
+        <span class="modal-title" id="metric-modal-title"></span>
+        <span class="modal-current" id="metric-modal-current"></span>
+      </div>
+      <button class="modal-close" onclick="closeMetricModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-formula-block">
+        <div class="modal-formula-label">Formula</div>
+        <div class="modal-formula-text" id="metric-modal-formula"></div>
+      </div>
+      <p class="modal-desc" id="metric-modal-desc"></p>
+      <div class="modal-calc">
+        <div class="modal-calc-label">Calculation with your inputs</div>
+        <div id="metric-modal-rows"></div>
+        <div class="calc-row result">
+          <span style="display:flex;align-items:center;gap:0">
+            <span class="calc-op">=</span>
+            <span class="calc-lbl" id="metric-modal-result-lbl"></span>
+          </span>
+          <span class="calc-num" id="metric-modal-result-num"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

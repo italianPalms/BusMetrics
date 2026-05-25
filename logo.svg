@@ -15,8 +15,8 @@
 
   <defs>
     <linearGradient id="grad" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4338ca"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
+      <stop offset="0%" stop-color="#1B2A47"/>
+      <stop offset="100%" stop-color="#2D4270"/>
     </linearGradient>
   </defs>
 </svg>
