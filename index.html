@@ -215,6 +215,34 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
+    /* ── Project manager bar ── */
+    .proj-mgr-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .proj-mgr-select {
+      flex: 1; min-width: 200px; padding: 9px 12px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 14px; color: var(--text); background: var(--input-bg);
+      cursor: pointer; transition: border-color .18s;
+    }
+    .proj-mgr-select:focus { outline: none; border-color: var(--primary); }
+    .btn-sm {
+      padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: var(--card);
+      color: var(--muted); transition: border-color .15s, color .15s, opacity .15s;
+      white-space: nowrap;
+    }
+    .btn-sm:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .btn-sm:disabled { opacity: .38; cursor: not-allowed; }
+    .btn-sm.save { background: linear-gradient(135deg,#4338ca,#7c3aed); color:#fff; border-color:transparent; }
+    .btn-sm.save:hover { opacity: .88; }
+    .btn-sm.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+    .proj-toast {
+      font-size: 12px; font-weight: 500; margin-top: 10px; padding: 7px 12px;
+      border-radius: 7px; display: none;
+    }
+    .proj-toast.ok  { background:#dcfce7; color:#16a34a; }
+    .proj-toast.err { background:#fee2e2; color:#dc2626; }
+    [data-theme="dark"] .proj-toast.ok  { background:#14532d; color:#86efac; }
+    [data-theme="dark"] .proj-toast.err { background:#450a0a; color:#fca5a5; }
+
     /* ── Project tab specifics ── */
     .proj-results-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px;
@@ -481,6 +509,22 @@
 
   <!-- ══════════════════════════════════════════════════════ PROJECT TAB ══ -->
   <div class="tab-pane" id="tab-project">
+
+    <!-- ── Project Manager ── -->
+    <div class="card">
+      <div class="card-title">🗂 Saved Projects</div>
+      <div class="proj-mgr-bar">
+        <select class="proj-mgr-select" id="proj-select" onchange="onProjectSelect()">
+          <option value="">— No saved projects yet —</option>
+        </select>
+        <button class="btn-sm"        id="btn-load"   onclick="loadSelectedProject()" disabled>↩ Load</button>
+        <button class="btn-sm danger" id="btn-delete" onclick="deleteSelectedProject()" disabled>Delete</button>
+        <div style="flex:1; min-width:4px;"></div>
+        <button class="btn-sm"      onclick="newProject()">＋ New</button>
+        <button class="btn-sm save" onclick="saveProject()">💾 Save</button>
+      </div>
+      <div class="proj-toast" id="proj-toast"></div>
+    </div>
 
     <!-- Project Inputs -->
     <div class="card">
@@ -1037,6 +1081,130 @@ function calculateProject() {
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 function setText(id, val) { document.getElementById(id).textContent = val; }
+
+// ─── Project storage ─────────────────────────────────────────────────────────
+let currentProjectId = null;
+
+function getProjects() {
+  try { return JSON.parse(localStorage.getItem('bm-projects') || '[]'); } catch { return []; }
+}
+function setProjects(p) { localStorage.setItem('bm-projects', JSON.stringify(p)); }
+
+function updateProjectDropdown() {
+  const projects = getProjects();
+  const sel = document.getElementById('proj-select');
+  sel.innerHTML = '';
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = projects.length ? '— Select a saved project —' : '— No saved projects yet —';
+  sel.appendChild(placeholder);
+  projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    const d = new Date(p.savedAt);
+    const label = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    opt.textContent = `${p.name || 'Untitled'} — saved ${label}`;
+    if (p.id === currentProjectId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  onProjectSelect();
+}
+
+function onProjectSelect() {
+  const has = !!document.getElementById('proj-select').value;
+  document.getElementById('btn-load').disabled   = !has;
+  document.getElementById('btn-delete').disabled = !has;
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('proj-toast');
+  t.textContent = msg;
+  t.className = 'proj-toast ' + type;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function saveProject() {
+  const name = document.getElementById('p_name').value.trim() || 'Untitled Project';
+  const snap = {
+    name,
+    savedAt: new Date().toISOString(),
+    inputs: {
+      budget:    +document.getElementById('p_budget').value    || 0,
+      duration:  +document.getElementById('p_duration').value  || 12,
+      customers: +document.getElementById('p_customers').value || 0,
+      arpu:      +document.getElementById('p_arpu').value      || 0,
+      varCost:   +document.getElementById('p_varCost').value   || 0,
+      fixedMo:   +document.getElementById('p_fixedMo').value   || 0,
+      churnPct:  +document.getElementById('p_churn').value     || 0,
+    }
+  };
+  const projects = getProjects();
+  if (currentProjectId) {
+    const idx = projects.findIndex(p => p.id === currentProjectId);
+    if (idx >= 0) { projects[idx] = { id: currentProjectId, ...snap }; }
+    else { currentProjectId = null; }
+  }
+  if (!currentProjectId) {
+    currentProjectId = Date.now();
+    projects.push({ id: currentProjectId, ...snap });
+  }
+  setProjects(projects);
+  updateProjectDropdown();
+  showToast(`✓ "${name}" saved`, 'ok');
+}
+
+function loadSelectedProject() {
+  const id = +document.getElementById('proj-select').value;
+  if (!id) return;
+  const p = getProjects().find(x => x.id === id);
+  if (!p) return;
+  currentProjectId = p.id;
+  const i = p.inputs;
+  document.getElementById('p_name').value      = p.name || '';
+  document.getElementById('p_budget').value    = i.budget;
+  document.getElementById('p_duration').value  = i.duration;
+  document.getElementById('p_customers').value = i.customers;
+  document.getElementById('p_arpu').value      = i.arpu;
+  document.getElementById('p_varCost').value   = i.varCost;
+  document.getElementById('p_fixedMo').value   = i.fixedMo;
+  document.getElementById('p_churn').value     = i.churnPct;
+  document.getElementById('p-name-display').textContent = p.name || 'Project';
+  calculateProject();
+  showToast(`✓ Loaded "${p.name || 'Untitled'}"`, 'ok');
+}
+
+function deleteSelectedProject() {
+  const id = +document.getElementById('proj-select').value;
+  if (!id) return;
+  const projects = getProjects();
+  const p = projects.find(x => x.id === id);
+  const name = p ? p.name || 'Untitled' : '';
+  setProjects(projects.filter(x => x.id !== id));
+  if (currentProjectId === id) currentProjectId = null;
+  updateProjectDropdown();
+  showToast(`Deleted "${name}"`, 'err');
+}
+
+function newProject() {
+  currentProjectId = null;
+  document.getElementById('p_name').value      = '';
+  document.getElementById('p_budget').value    = 50000;
+  document.getElementById('p_duration').value  = 12;
+  document.getElementById('p_customers').value = 100;
+  document.getElementById('p_arpu').value      = 100;
+  document.getElementById('p_varCost').value   = 30;
+  document.getElementById('p_fixedMo').value   = 2000;
+  document.getElementById('p_churn').value     = 2;
+  document.getElementById('p-name-display').textContent = 'Project';
+  document.getElementById('p-sec-results').classList.add('hidden');
+  document.getElementById('proj-select').value = '';
+  onProjectSelect();
+}
+
+// Init dropdown on load
+updateProjectDropdown();
 
 // ─── Dark mode ────────────────────────────────────────────────────────────────
 function toggleTheme() {
