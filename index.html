@@ -288,6 +288,57 @@
     /* ── Hidden ── */
     .hidden { display: none !important; }
 
+    /* ── Project Tracker ── */
+    .tracker-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
+    }
+    .status-chip-track {
+      padding: 5px 16px; border-radius: 4px; font-size: 13px; font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-on-track { background: #dcfce7; color: #15803d; }
+    .status-at-risk  { background: #fef9c3; color: #a16207; }
+    .status-over     { background: #fee2e2; color: #dc2626; }
+    .status-no-data  { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+    [data-theme="dark"] .status-on-track { background: #14532d; color: #86efac; }
+    [data-theme="dark"] .status-at-risk  { background: #422006; color: #fbbf24; }
+    [data-theme="dark"] .status-over     { background: #450a0a; color: #fca5a5; }
+
+    .tracker-stats {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;
+    }
+    .tracker-stat {
+      background: var(--surface); border-radius: 6px; padding: 14px 16px;
+      border: 1px solid var(--border);
+    }
+    .tracker-stat-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .tracker-stat-val   { font-size: 22px; font-weight: 800; color: var(--primary); }
+
+    .actuals-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .actuals-table th {
+      text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 2px solid var(--border); white-space: nowrap;
+    }
+    .actuals-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .actuals-table tr:last-child td { border-bottom: none; }
+    .actuals-table .setup-row td { background: var(--surface); }
+    .at-input {
+      width: 120px; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 4px;
+      font-size: 13px; color: var(--text); background: var(--input-bg); transition: border-color .15s;
+    }
+    .at-input:focus { outline: none; border-color: var(--primary); }
+    .at-notes {
+      width: 180px; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 4px;
+      font-size: 12px; color: var(--text); background: var(--input-bg); transition: border-color .15s;
+    }
+    .at-notes:focus  { outline: none; border-color: var(--primary); }
+    .period-label    { font-weight: 600; color: var(--text); font-size: 13px; }
+    .period-sub      { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .planned-amt     { font-weight: 600; color: var(--text); }
+    .at-status       { font-size: 16px; text-align: center; min-width: 36px; }
+
     /* ── Metric info modal ── */
     .mc { cursor: pointer; }
     .mc:hover { box-shadow: var(--shadow-md); border-top-color: var(--accent); }
@@ -369,6 +420,7 @@
   <div class="tabs" style="margin-bottom:0;">
     <button class="tab-btn active" onclick="switchTab('company')" id="tab-btn-company">🏢 Company / Department</button>
     <button class="tab-btn"        onclick="switchTab('project')"  id="tab-btn-project">📋 Project Calculator</button>
+    <button class="tab-btn"        onclick="switchTab('tracker')"  id="tab-btn-tracker">📊 Project Tracker</button>
   </div>
 
   <!-- ══════════════════════════════════════════════════════ COMPANY TAB ══ -->
@@ -708,6 +760,86 @@
   </div><!-- /app-body -->
   </div><!-- /tab-project -->
 
+  <!-- ══════════════════ PROJECT TRACKER TAB ══════════════════ -->
+  <div class="tab-pane" id="tab-tracker">
+    <div class="app-body">
+
+      <!-- Select project -->
+      <div class="card">
+        <div class="card-title">📊 Project Tracker</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Select a saved project to track actual costs and revenue against the plan.</p>
+        <div class="proj-mgr-bar">
+          <select class="proj-mgr-select" id="tracker-select" onchange="onTrackerSelect()">
+            <option value="">— Select a saved project —</option>
+          </select>
+          <button class="btn-sm" id="tracker-load-btn" onclick="loadProjectForTracking()" disabled>Load for Tracking</button>
+        </div>
+      </div>
+
+      <!-- Health summary (hidden until project loaded) -->
+      <div class="card hidden" id="tracker-sec-summary">
+        <div class="tracker-header-row">
+          <div class="card-title" style="margin-bottom:0" id="tracker-project-name">Project</div>
+          <div class="status-chip-track status-no-data" id="tracker-status-chip">No data yet</div>
+        </div>
+        <div class="tracker-stats">
+          <div class="tracker-stat">
+            <div class="tracker-stat-label">Total Planned Cost</div>
+            <div class="tracker-stat-val" id="tr-planned-total">—</div>
+          </div>
+          <div class="tracker-stat">
+            <div class="tracker-stat-label">Spent So Far</div>
+            <div class="tracker-stat-val" id="tr-spent">—</div>
+          </div>
+          <div class="tracker-stat">
+            <div class="tracker-stat-label">Budget Remaining</div>
+            <div class="tracker-stat-val" id="tr-remaining">—</div>
+          </div>
+          <div class="tracker-stat">
+            <div class="tracker-stat-label">Variance vs Plan</div>
+            <div class="tracker-stat-val" id="tr-variance">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly actuals table -->
+      <div class="card hidden" id="tracker-sec-actuals">
+        <div class="card-title">Monthly Actuals
+          <span class="badge" style="font-size:11px">Enter actual costs as the project runs</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="actuals-table">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Planned Cost</th>
+                <th>Actual Cost ($)</th>
+                <th>Actual Revenue ($)</th>
+                <th>Notes</th>
+                <th style="text-align:center">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tracker-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn-calc" onclick="saveActuals()">💾 Save Actuals</button>
+          <div class="proj-toast" id="tracker-toast" style="position:static;display:none;border-radius:4px;padding:6px 14px;font-size:13px"></div>
+        </div>
+      </div>
+
+      <!-- Burn chart -->
+      <div class="card hidden" id="tracker-sec-chart">
+        <div class="card-title">Budget vs Actual Burn</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px;margin-top:-8px">Cumulative planned cost vs actual spend over the project duration.</p>
+        <div class="chart-wrap" style="height:300px">
+          <canvas id="ch-tracker"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab-tracker -->
+
 </div><!-- /app -->
 
 <script>
@@ -1036,10 +1168,12 @@ function renderScBlock(id, cpa, arpu, churnPct, gm, epc, ltv, payback, ratio) {
 
 // ─── Tab switching ────────────────────────────────────────────────────────────
 function switchTab(name) {
-  ['company','project'].forEach(t => {
+  ['company','project','tracker'].forEach(t => {
     document.getElementById('tab-' + t).classList.toggle('active', t === name);
     document.getElementById('tab-btn-' + t).classList.toggle('active', t === name);
   });
+  // Sync tracker dropdown whenever switching to it
+  if (name === 'tracker') updateTrackerDropdown();
 }
 
 // ─── Project calculation ──────────────────────────────────────────────────────
@@ -1242,6 +1376,7 @@ function saveProject() {
   }
   setProjects(projects);
   updateProjectDropdown();
+  updateTrackerDropdown();
   showToast(`✓ "${name}" saved`, 'ok');
 }
 
@@ -1274,6 +1409,7 @@ function deleteSelectedProject() {
   setProjects(projects.filter(x => x.id !== id));
   if (currentProjectId === id) currentProjectId = null;
   updateProjectDropdown();
+  updateTrackerDropdown();
   showToast(`Deleted "${name}"`, 'err');
 }
 
@@ -1293,8 +1429,9 @@ function newProject() {
   onProjectSelect();
 }
 
-// Init dropdown on load
+// Init dropdowns on load
 updateProjectDropdown();
+updateTrackerDropdown();
 
 // ─── Dark mode ────────────────────────────────────────────────────────────────
 function toggleTheme() {
@@ -1310,6 +1447,259 @@ function applyTheme(theme) {
   btn.textContent = theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
   // Re-render charts with new theme colours if they exist
   if (B.cpa) renderCharts(B);
+}
+
+// ─── Project Tracker ──────────────────────────────────────────────────────────
+let chartTracker  = null;
+let trackerProject = null;
+
+// Signed currency formatter (shows + or − prefix)
+const fkSigned = v => {
+  if (N(v) == null) return '—';
+  const sign = v > 0 ? '+' : v < 0 ? '−' : '';
+  const abs  = Math.abs(v);
+  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(2) + 'M';
+  if (abs >= 1e3) return sign + '$' + (abs/1e3).toFixed(1) + 'K';
+  return sign + '$' + f0(abs);
+};
+
+function getActuals()         { try { return JSON.parse(localStorage.getItem('bm-actuals') || '{}'); } catch { return {}; } }
+function setActuals(data)     { localStorage.setItem('bm-actuals', JSON.stringify(data)); }
+function getProjectActuals(id){ return getActuals()[id] || []; }
+
+function updateTrackerDropdown() {
+  const sel = document.getElementById('tracker-select');
+  if (!sel) return;
+  const projects = getProjects();
+  const curVal   = sel.value;
+  sel.innerHTML  = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = projects.length ? '— Select a saved project —' : '— No saved projects yet —';
+  sel.appendChild(ph);
+  projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name || 'Untitled Project';
+    if (String(p.id) === curVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  onTrackerSelect();
+}
+
+function onTrackerSelect() {
+  document.getElementById('tracker-load-btn').disabled =
+    !document.getElementById('tracker-select').value;
+}
+
+function loadProjectForTracking() {
+  const id = +document.getElementById('tracker-select').value;
+  if (!id) return;
+  const p = getProjects().find(x => x.id === id);
+  if (!p) return;
+  trackerProject = p;
+  renderTracker();
+}
+
+function renderTracker() {
+  if (!trackerProject) return;
+  const p  = trackerProject;
+  const i  = p.inputs;
+  const duration        = Math.max(1, i.duration   || 12);
+  const budget          = i.budget    || 0;
+  const monthlyRunCost  = (i.fixedMo  || 0) + (i.varCost || 0) * (i.customers || 0);
+  const monthlyPlanRev  = (i.arpu     || 0) * (i.customers || 0);
+
+  // Planned per period: index 0 = setup, 1..N = monthly running
+  const plannedCost = [budget, ...Array(duration).fill(monthlyRunCost)];
+  const plannedRev  = [0,      ...Array(duration).fill(monthlyPlanRev)];
+
+  // Load saved actuals
+  const saved   = getProjectActuals(p.id); // [{cost, revenue, notes}, ...]
+  const actuals = Array.from({length: duration + 1}, (_, m) =>
+    saved[m] || { cost: '', revenue: '', notes: '' }
+  );
+
+  // Show sections
+  ['tracker-sec-summary','tracker-sec-actuals','tracker-sec-chart'].forEach(id =>
+    document.getElementById(id).classList.remove('hidden')
+  );
+  document.getElementById('tracker-project-name').textContent = p.name || 'Untitled Project';
+
+  // Build actuals table
+  const tbody = document.getElementById('tracker-tbody');
+  tbody.innerHTML = '';
+  for (let m = 0; m <= duration; m++) {
+    const isSetup = m === 0;
+    const tr = document.createElement('tr');
+    if (isSetup) tr.className = 'setup-row';
+    tr.innerHTML = `
+      <td>
+        <div class="period-label">${isSetup ? 'Month 0' : 'Month ' + m}</div>
+        <div class="period-sub">${isSetup ? 'Setup / Acquisition' : 'Running costs'}</div>
+      </td>
+      <td><span class="planned-amt">${fc(plannedCost[m])}</span></td>
+      <td><input class="at-input" type="number" min="0" placeholder="0"
+           id="at-cost-${m}" value="${actuals[m].cost}"
+           oninput="updateTrackerSummary()"></td>
+      <td><input class="at-input" type="number" min="0" placeholder="0"
+           id="at-rev-${m}" value="${actuals[m].revenue}"
+           oninput="updateTrackerSummary()"></td>
+      <td><input class="at-notes" type="text" placeholder="Optional note"
+           id="at-notes-${m}" value="${actuals[m].notes || ''}"></td>
+      <td class="at-status" id="at-status-${m}">—</td>`;
+    tbody.appendChild(tr);
+  }
+
+  updateTrackerSummary();
+}
+
+function updateTrackerSummary() {
+  if (!trackerProject) return;
+  const p  = trackerProject;
+  const i  = p.inputs;
+  const duration       = Math.max(1, i.duration  || 12);
+  const budget         = i.budget    || 0;
+  const monthlyRunCost = (i.fixedMo  || 0) + (i.varCost || 0) * (i.customers || 0);
+  const plannedCost    = [budget, ...Array(duration).fill(monthlyRunCost)];
+  const totalPlanned   = plannedCost.reduce((a, v) => a + v, 0);
+
+  // Cumulative planned cost
+  const plannedCum = plannedCost.reduce((acc, v) => {
+    acc.push((acc.at(-1) ?? 0) + v); return acc;
+  }, []);
+
+  // Gather actuals
+  let spentTotal = 0, lastIdx = -1;
+  const actualCostArr = [];
+  const actualRevArr  = [];
+  for (let m = 0; m <= duration; m++) {
+    const c = parseFloat(document.getElementById('at-cost-' + m)?.value) || 0;
+    const r = parseFloat(document.getElementById('at-rev-'  + m)?.value) || 0;
+    actualCostArr.push(c);
+    actualRevArr.push(r);
+    if (c > 0) { spentTotal += c; lastIdx = m; }
+  }
+
+  // Cumulative actuals (cost only, up to last entered)
+  const actualCum = actualCostArr.reduce((acc, v) => {
+    acc.push((acc.at(-1) ?? 0) + v); return acc;
+  }, []);
+  const actualCumChart = actualCum.map((v, m) => m <= lastIdx ? v : null);
+
+  // Per-row status icons
+  for (let m = 0; m <= duration; m++) {
+    const el = document.getElementById('at-status-' + m);
+    if (!el) continue;
+    const c = actualCostArr[m];
+    if (!c) { el.textContent = '—'; continue; }
+    const ratio = c / plannedCost[m];
+    el.textContent = ratio <= 1.0 ? '✅' : ratio <= 1.15 ? '⚠️' : '🔴';
+  }
+
+  // Summary stats
+  const remaining = totalPlanned - spentTotal;
+  const variance  = lastIdx >= 0
+    ? actualCum[lastIdx] - plannedCum[lastIdx]
+    : 0;
+
+  setText('tr-planned-total', fk(totalPlanned));
+  setText('tr-spent',         fk(spentTotal));
+
+  const remEl = document.getElementById('tr-remaining');
+  remEl.textContent  = fk(remaining);
+  remEl.style.color  = remaining < 0 ? 'var(--danger)' : '';
+
+  const varEl = document.getElementById('tr-variance');
+  if (lastIdx < 0) { varEl.textContent = '—'; varEl.style.color = ''; }
+  else {
+    varEl.textContent = fkSigned(variance);
+    varEl.style.color = variance > 0 ? 'var(--danger)' : variance < 0 ? 'var(--success)' : '';
+  }
+
+  // Health chip
+  const chip = document.getElementById('tracker-status-chip');
+  if (lastIdx < 0) {
+    chip.textContent = 'No data yet';
+    chip.className   = 'status-chip-track status-no-data';
+  } else {
+    const ratio = actualCum[lastIdx] / plannedCum[lastIdx];
+    if (ratio <= 1.0)       { chip.textContent = '✓ On Track';    chip.className = 'status-chip-track status-on-track'; }
+    else if (ratio <= 1.15) { chip.textContent = '⚠ At Risk';    chip.className = 'status-chip-track status-at-risk';  }
+    else                    { chip.textContent = '✕ Over Budget'; chip.className = 'status-chip-track status-over';     }
+  }
+
+  renderBurnChart(plannedCum, actualCumChart, duration);
+}
+
+function renderBurnChart(plannedCum, actualCumChart, duration) {
+  if (chartTracker) { chartTracker.destroy(); chartTracker = null; }
+  const mutedColor  = cssVar('--muted');
+  const borderColor = cssVar('--border');
+  const labels = Array.from({length: duration + 1}, (_, m) => m === 0 ? 'Setup' : 'M' + m);
+
+  chartTracker = new Chart(document.getElementById('ch-tracker'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Planned Cumulative Cost',
+          data: plannedCum,
+          borderColor: '#1B2A47',
+          borderDash: [6, 4],
+          backgroundColor: 'rgba(27,42,71,.07)',
+          fill: true,
+          tension: 0,
+          pointRadius: 2,
+          borderWidth: 2,
+        },
+        {
+          label: 'Actual Cumulative Cost',
+          data: actualCumChart,
+          borderColor: '#E0000F',
+          backgroundColor: 'rgba(224,0,15,.09)',
+          fill: false,
+          tension: 0,
+          pointRadius: 5,
+          pointBackgroundColor: '#E0000F',
+          borderWidth: 2.5,
+          spanGaps: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: mutedColor, boxWidth: 12, padding: 16 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fk(c.raw) } }
+      },
+      scales: {
+        x: { grid: { color: borderColor }, ticks: { color: mutedColor } },
+        y: { grid: { color: borderColor }, ticks: { color: mutedColor, callback: v => fk(v) }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function saveActuals() {
+  if (!trackerProject) return;
+  const duration = Math.max(1, trackerProject.inputs.duration || 12);
+  const data = Array.from({length: duration + 1}, (_, m) => ({
+    cost:    parseFloat(document.getElementById('at-cost-' + m)?.value)  || 0,
+    revenue: parseFloat(document.getElementById('at-rev-'  + m)?.value)  || 0,
+    notes:   document.getElementById('at-notes-' + m)?.value || '',
+  }));
+  const all = getActuals();
+  all[trackerProject.id] = data;
+  setActuals(all);
+
+  const t = document.getElementById('tracker-toast');
+  t.textContent = '✓ Actuals saved';
+  t.className   = 'proj-toast ok';
+  t.style.display = 'inline-block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
 
 // Restore saved theme on load
