@@ -274,16 +274,79 @@
     .compare-val.better { color: #16a34a; }
     .compare-val.worse  { color: #dc2626; }
 
+    /* ── Header layout ── */
+    .hdr-top {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 8px;
+    }
+    .hdr-top img { flex-shrink: 0; }
+    header p  { opacity: .72; font-size: 13px; line-height: 1.5; }
+
     /* ── Dark mode toggle ── */
     .theme-btn {
-      position: absolute; top: 50%; right: 36px; transform: translateY(-50%);
       background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
       color: rgba(255,255,255,.85); padding: 6px 14px; border-radius: 4px; cursor: pointer;
       font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;
-      transition: background .2s;
+      transition: background .2s; white-space: nowrap; flex-shrink: 0;
     }
     .theme-btn:hover { background: rgba(255,255,255,.22); }
-    header { position: relative; }
+
+    /* ── Password gate ── */
+    .pw-gate {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--primary);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .pw-box {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+      border-radius: 10px; padding: 36px 32px; width: 100%; max-width: 360px;
+      text-align: center;
+    }
+    .pw-box img   { margin-bottom: 24px; }
+    .pw-box h2    { color: #fff; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .pw-box p     { color: rgba(255,255,255,.6); font-size: 13px; margin-bottom: 20px; }
+    .pw-input {
+      width: 100%; padding: 11px 14px; border-radius: 5px;
+      border: 1.5px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1);
+      color: #fff; font-size: 15px; text-align: center; letter-spacing: .08em;
+      outline: none; box-sizing: border-box; transition: border-color .18s;
+    }
+    .pw-input::placeholder { color: rgba(255,255,255,.35); letter-spacing: 0; }
+    .pw-input:focus { border-color: rgba(255,255,255,.55); }
+    .pw-btn {
+      width: 100%; margin-top: 12px; padding: 12px; border: none; border-radius: 5px;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: background .18s;
+    }
+    .pw-btn:hover { background: var(--accent-hover); }
+    .pw-error {
+      color: #fca5a5; font-size: 12px; margin-top: 10px; min-height: 18px;
+    }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 600px) {
+      header      { padding: 16px 16px 14px; }
+      .app-body   { padding: 14px 14px; }
+      .tabs       { padding: 0 8px; }
+      .tab-btn    { padding: 12px 12px; font-size: 12px; letter-spacing: 0; }
+      .card       { padding: 16px 14px; }
+      .inputs-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .mc-val     { font-size: 20px; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .sens-layout { grid-template-columns: 1fr; }
+      .scenarios-grid { grid-template-columns: 1fr; }
+      .proj-compare   { grid-template-columns: 1fr; }
+      .tracker-stats  { grid-template-columns: 1fr 1fr; }
+      .health-bar     { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .health-ratio-num { font-size: 36px; }
+      .hdr-top img    { height: 32px; }
+      .proj-mgr-bar   { flex-direction: column; align-items: stretch; }
+      .proj-mgr-bar .btn-sm, .proj-mgr-bar .btn-calc { width: 100%; }
+      .modal-box      { margin: 0; border-radius: 12px 12px 0 0; max-width: 100%; }
+      .modal-overlay  { align-items: flex-end; padding: 0; }
+      .at-notes       { width: 110px; }
+    }
 
     /* ── Hidden ── */
     .hidden { display: none !important; }
@@ -405,15 +468,29 @@
   </style>
 </head>
 <body>
+
+<!-- ── Password gate ── -->
+<div class="pw-gate" id="pw-gate">
+  <div class="pw-box">
+    <img src="logo.svg" alt="BusMetrics" height="44" />
+    <h2>Welcome back</h2>
+    <p>Enter the password to access your dashboard.</p>
+    <input class="pw-input" id="pw-input" type="password" placeholder="Password"
+           onkeydown="if(event.key==='Enter')submitPassword()" autocomplete="current-password" />
+    <button class="pw-btn" onclick="submitPassword()">Unlock</button>
+    <div class="pw-error" id="pw-error"></div>
+  </div>
+</div>
+
 <div class="app">
 
   <!-- Header -->
   <header>
-    <div style="margin-bottom:8px;">
-      <img src="logo.svg" alt="BusMetrics" height="42" style="display:block;" />
+    <div class="hdr-top">
+      <img src="logo.svg" alt="BusMetrics" height="42" />
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark mode</button>
     </div>
     <p>Enter raw figures below — calculate CPA, ARPU, LTV, payback period &amp; more, then explore scenarios and sensitivity in real time.</p>
-    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark mode</button>
   </header>
 
   <!-- ── TAB NAVIGATION ── -->
@@ -1701,6 +1778,39 @@ function saveActuals() {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
+
+// ─── Password gate ────────────────────────────────────────────────────────────
+const PW_HASH = 'd5a4324eba6457b58fca7175682eef28e760bbf6f62403aa45cbf3d20ac85b0f'; // SHA-256 of "BusMetrics"
+
+async function hashPassword(pw) {
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function submitPassword() {
+  const pw  = document.getElementById('pw-input').value;
+  const err = document.getElementById('pw-error');
+  if (!pw) { err.textContent = 'Please enter the password.'; return; }
+  const hash = await hashPassword(pw);
+  if (hash === PW_HASH) {
+    sessionStorage.setItem('bm-auth', '1');
+    document.getElementById('pw-gate').style.display = 'none';
+    err.textContent = '';
+  } else {
+    err.textContent = 'Incorrect password. Please try again.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+(function initAuth() {
+  if (sessionStorage.getItem('bm-auth') === '1') {
+    document.getElementById('pw-gate').style.display = 'none';
+  } else {
+    // Slight delay so the gate renders before focusing
+    setTimeout(() => document.getElementById('pw-input')?.focus(), 80);
+  }
+})();
 
 // Restore saved theme on load
 (function () {
