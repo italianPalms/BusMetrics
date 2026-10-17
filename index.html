@@ -6,465 +6,332 @@
   <title>Business Metrics Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;550;600;650;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    /* Layout and look follow Allocation Desk: slim app bar, segmented tabs, card grid, Claude floating bottom-right */
     :root {
-      --primary: #1B2A47;
-      --primary-hover: #243761;
-      --primary-faint: #E8ECF5;
-      --accent: #E0000F;
-      --accent-hover: #B5000C;
-      --success: #00875A;
-      --warning: #F59E0B;
-      --danger: #DC2626;
-      --bg: #EEF1F7;
-      --card: #ffffff;
-      --surface: #F5F7FB;
-      --input-bg: #ffffff;
-      --border: #D6DCE8;
-      --text: #0F1924;
-      --muted: #566278;
-      --neu-bg: #EEF1F7;
-      --shadow: 0 1px 3px rgba(15,25,36,.07), 0 1px 2px rgba(15,25,36,.05);
-      --shadow-md: 0 4px 16px rgba(15,25,36,.11);
+      --bg: #f4f5f8;
+      --surface: #ffffff;
+      --surface-2: #f6f7fa;
+      --ink: #0f1424;
+      --ink-2: #4b5268;
+      --muted: #8a90a3;
+      --line: #e6e8ef;
+      --accent: #8dbfe8;
+      --accent-ink: #0f2238;
+      --accent-soft: #e7f1fb;
+      --key: #2d6ca8;
+      --link: #2d6ca8;
+      --before: #cdd2de;
+      --good: #118a55;
+      --bad: #d23f3f;
+      --warn: #a8650a;
+      --warn-soft: #fdf4e4;
+      --shadow: 0 1px 2px rgba(15,20,36,.04), 0 2px 8px rgba(15,20,36,.04);
+      --shadow-lg: 0 12px 40px rgba(15,20,36,.16), 0 2px 6px rgba(15,20,36,.06);
+      --f-body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --f-data: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+      --r: 14px;
+      /* names the page's scripts and inline styles use */
+      --primary: var(--key);
+      --text: var(--ink);
+      --border: var(--line);
+      --card: var(--surface);
+      --success: var(--good);
+      --danger: var(--bad);
     }
-    [data-theme="dark"] {
-      --primary: #4A6FA5;
-      --primary-hover: #5A82BA;
-      --primary-faint: #0D1B30;
-      --accent: #FF2233;
-      --accent-hover: #E0000F;
-      --bg: #0A0F1A;
-      --card: #111827;
-      --surface: #1A2333;
-      --input-bg: #141E2E;
-      --border: #243047;
-      --text: #E8EDF5;
-      --muted: #7A90B0;
-      --neu-bg: #111827;
-      --shadow: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
-      --shadow-md: 0 4px 12px rgba(0,0,0,.5);
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+      --bg: #0b0d14; --surface: #12151f; --surface-2: #181c28; --ink: #eef0f6; --ink-2: #a7adbf; --muted: #6f768a;
+      --line: #232838; --accent: #9cc9f0; --accent-ink: #0b1622; --accent-soft: #172a3c; --key: #a9d1f4; --link: #a9d1f4;
+      --before: #3a4155; --good: #3fcf8e; --bad: #ff6b6b; --warn: #f0b45a; --warn-soft: #2a2213;
+      --shadow: 0 1px 2px rgba(0,0,0,.3); --shadow-lg: 0 16px 50px rgba(0,0,0,.55); color-scheme: dark;
+    }}
+    :root[data-theme="dark"] {
+      --bg: #0b0d14; --surface: #12151f; --surface-2: #181c28; --ink: #eef0f6; --ink-2: #a7adbf; --muted: #6f768a;
+      --line: #232838; --accent: #9cc9f0; --accent-ink: #0b1622; --accent-soft: #172a3c; --key: #a9d1f4; --link: #a9d1f4;
+      --before: #3a4155; --good: #3fcf8e; --bad: #ff6b6b; --warn: #f0b45a; --warn-soft: #2a2213;
+      --shadow: 0 1px 2px rgba(0,0,0,.3); --shadow-lg: 0 16px 50px rgba(0,0,0,.55); color-scheme: dark;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg); color: var(--text); line-height: 1.5;
-      transition: background .25s, color .25s;
-    }
-    .app { max-width: 1400px; margin: 0 auto; padding: 0; }
+    [hidden] { display: none !important; }
+    body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 6px; }
+    input, select, textarea { transition: border-color .15s, box-shadow .15s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--link) !important; box-shadow: 0 0 0 3px var(--accent-soft); }
+    .app { max-width: 1520px; margin: 0 auto; padding-block: 0 96px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+    .app-body, #p-sec-results { display: grid; gap: 16px; }
+    .hidden { display: none !important; }
 
-    /* ── Header ── */
-    header {
-      background: var(--primary);
-      color: #fff; padding: 22px 36px; margin-bottom: 0; box-shadow: 0 2px 8px rgba(15,25,36,.18);
-    }
-    header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-    header p  { opacity: .72; font-size: 13px; }
-    .app-body { padding: 28px 36px; }
-
-    /* ── Section card ── */
-    .card {
-      background: var(--card); border-radius: 6px; padding: 24px;
-      margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border);
-    }
-    .card-title {
-      font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--primary);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .badge {
-      font-size: 11px; font-weight: 600; padding: 2px 9px;
-      border-radius: 3px; background: var(--primary-faint); color: var(--primary);
-    }
-
-    /* ── Inputs ── */
-    .inputs-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 20px;
-    }
-    .igroup { display: flex; flex-direction: column; gap: 5px; }
-    .igroup label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .03em; text-transform: uppercase; }
-    .igroup .hint { font-size: 11px; color: var(--muted); }
-    .ifield {
-      position: relative;
-    }
-    .ifield span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
-    .ifield input {
-      width: 100%; padding: 9px 10px 9px 22px; border: 1.5px solid var(--border);
-      border-radius: 4px; font-size: 14px; color: var(--text); background: var(--input-bg);
-      transition: border-color .18s, box-shadow .18s, background .25s;
-    }
-    .ifield input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(27,42,71,.12); background: var(--card); }
-
-    .btn-calc {
-      background: var(--accent); color: #fff;
-      border: none; padding: 11px 32px; border-radius: 4px; font-size: 14px;
-      font-weight: 700; cursor: pointer; letter-spacing: .01em;
-      transition: background .18s, transform .1s;
-    }
-    .btn-calc:hover  { background: var(--accent-hover); transform: translateY(-1px); }
-    .btn-calc:active { transform: translateY(0); }
-
-    /* ── Metric Cards ── */
-    .metrics-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px;
-    }
-    .mc {
-      background: var(--card); border: 1px solid var(--border); border-radius: 5px;
-      padding: 16px; transition: box-shadow .18s;
-      border-top: 3px solid var(--primary);
-    }
-    .mc:hover { box-shadow: var(--shadow-md); }
-    .mc-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
-    .mc-val   { font-size: 24px; font-weight: 800; color: var(--primary); }
-    .mc-unit  { font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-    /* ── Health ── */
-    .health-bar {
-      display: flex; align-items: center; gap: 28px; padding: 20px 24px;
-      background: var(--surface); border-radius: 10px; border: 1.5px solid var(--border);
-    }
-    .health-ratio-num { font-size: 48px; font-weight: 800; line-height: 1; }
-    .health-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
-    .health-pill {
-      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
-      border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 8px;
-    }
-    .pill-excellent { background: #dcfce7; color: #16a34a; }
-    .pill-good      { background: #d1fae5; color: #059669; }
-    .pill-fair      { background: #fef9c3; color: #ca8a04; }
-    .pill-poor      { background: #fee2e2; color: #dc2626; }
-    .health-benchmarks { display: flex; flex-direction: column; gap: 7px; }
-    .bm { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
-    .bm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    /* progress bar */
-    .ratio-track { flex: 1; background: var(--border); border-radius: 99px; height: 10px; position: relative; overflow: hidden; }
-    .ratio-fill  { height: 100%; border-radius: 99px; transition: width .4s, background .4s; }
-
-    /* ── Charts ── */
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
-    .chart-wrap { position: relative; height: 280px; }
-    .chart-subtitle { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 10px; }
-
-    /* ── Sensitivity ── */
-    .sens-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-    @media (max-width: 800px) { .sens-layout { grid-template-columns: 1fr; } }
-    .sliders-col { display: flex; flex-direction: column; gap: 22px; }
-    .slider-group { display: flex; flex-direction: column; gap: 7px; }
-    .slider-header { display: flex; justify-content: space-between; align-items: center; }
-    .slider-label { font-size: 14px; font-weight: 500; }
-    .slider-badge { font-size: 13px; font-weight: 700; background: var(--primary-faint); color: var(--primary); padding: 2px 9px; border-radius: 5px; }
-    .slider-meta { font-size: 12px; color: var(--muted); }
-    input[type=range] {
-      -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none;
-      background: linear-gradient(to right, var(--primary) 50%, var(--border) 50%);
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-      background: var(--primary); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.2);
-    }
-
-    .results-col { display: flex; flex-direction: column; gap: 10px; }
-    .results-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 2px; }
-    .sens-row {
-      background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px;
-      padding: 13px 16px; display: flex; justify-content: space-between; align-items: center;
-    }
-    .sens-row-label { font-size: 13px; color: var(--muted); font-weight: 500; }
-    .sens-row-vals  { display: flex; align-items: center; gap: 8px; }
-    .sens-base { font-size: 13px; color: #94a3b8; text-decoration: line-through; }
-    .sens-new  { font-size: 15px; font-weight: 700; }
-    .delta-pill { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
-    .pos { background: #dcfce7; color: #16a34a; }
-    .neg { background: #fee2e2; color: #dc2626; }
-    .neu { background: var(--neu-bg); color: var(--muted); }
-    .reset-btn {
-      align-self: flex-start; padding: 7px 16px; border: 1.5px solid var(--border);
-      border-radius: 7px; background: var(--card); cursor: pointer; font-size: 13px; color: var(--muted);
-      transition: border-color .15s;
-    }
-    .reset-btn:hover { border-color: var(--primary); color: var(--primary); }
-
-    /* ── Scenarios ── */
-    .scenarios-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    @media (max-width: 800px) { .scenarios-grid { grid-template-columns: 1fr; } }
-    .sc { border: 1.5px solid var(--border); border-radius: 5px; overflow: hidden; }
-    .sc.base { border-color: var(--primary); }
-    .sc.opt  { border-color: var(--success); }
-    .sc.pes  { border-color: var(--danger);  }
-    .sc-head { padding: 10px 16px; text-align: center; font-weight: 700; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
-    .sc.base .sc-head { background: var(--primary); color: #fff; }
-    .sc.opt  .sc-head { background: var(--success);  color: #fff; }
-    .sc.pes  .sc-head { background: var(--danger);   color: #fff; }
-    .sc-inputs { padding: 14px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 9px; }
-    .sc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .sc-lbl { font-size: 12px; color: var(--muted); flex: 1; }
-    .sc-input {
-      width: 90px; padding: 5px 8px; border: 1.5px solid var(--border); border-radius: 6px;
-      font-size: 13px; text-align: right; color: var(--text); background: var(--input-bg);
-    }
-    .sc-input:focus { outline: none; border-color: var(--primary); }
-    .sc-results { padding: 14px; display: flex; flex-direction: column; gap: 7px; }
-    .sc-res-row { display: flex; justify-content: space-between; align-items: center; }
-    .sc-res-lbl { font-size: 12px; color: var(--muted); }
-    .sc-res-val { font-size: 13px; font-weight: 600; }
+    /* ── App bar ── */
+    header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; padding-block: 18px 14px; }
+    header.top .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+    header.top h1 { font-size: 18px; font-weight: 650; letter-spacing: -.015em; line-height: 1.2; }
+    header.top .sub { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    header.top .meta { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
+    .pill { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; box-shadow: var(--shadow); }
+    .theme-btn { color: var(--ink-2); font-size: 12.5px; }
+    .theme-btn:hover { color: var(--ink); }
 
     /* ── Tabs ── */
-    .tabs {
-      display: flex; gap: 0; background: var(--primary);
-      padding: 0 36px; margin-bottom: 0; border-bottom: none;
-    }
-    .tab-btn {
-      padding: 14px 24px; border: none; cursor: pointer;
-      font-size: 13px; font-weight: 600; letter-spacing: .02em;
-      transition: background .18s, color .18s;
-      background: transparent; color: rgba(255,255,255,.6);
-      border-bottom: 3px solid transparent; margin-bottom: -1px;
-    }
-    .tab-btn:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
-    .tab-btn.active {
-      color: #fff; border-bottom: 3px solid var(--accent);
-      background: rgba(255,255,255,.1);
-    }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .toolbar .note { font-size: 12.5px; color: var(--muted); }
+    .tabs { display: inline-flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; max-width: 100%; overflow-x: auto; }
+    .tab-btn { border: 0; background: transparent; color: var(--ink-2); padding: 7px 14px; border-radius: 9px; font-weight: 550; font-size: 13.5px; white-space: nowrap; }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow), 0 0 0 1px var(--line); }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
+    /* ── Panels ── */
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; box-shadow: var(--shadow); }
+    .card-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.005em; color: var(--ink); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .badge { font-size: 11.5px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); white-space: nowrap; }
+
+    /* ── Buttons ── */
+    .btn, .btn-sm, .btn-calc, .reset-btn { border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 9px; font-weight: 550; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; transition: background .15s, border-color .15s, filter .15s; }
+    .btn:hover, .btn-sm:hover:not(:disabled), .reset-btn:hover { background: var(--surface-2); }
+    .btn.primary, .btn-calc, .btn-sm.save { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .btn.primary:hover, .btn-calc:hover, .btn-sm.save:hover { filter: brightness(1.08); background: var(--accent); }
+    .btn-calc { padding: 8px 18px; font-size: 13.5px; }
+    .btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+    .btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
+    .btn.sm, .btn-sm, .reset-btn { padding: 4px 10px; font-size: 12.5px; border-radius: 8px; }
+    .btn-sm.danger { color: var(--bad); }
+    .btn:disabled, .btn-sm:disabled { opacity: .5; cursor: default; }
+    .reset-btn { align-self: flex-start; color: var(--ink-2); }
+    .btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .claude-mark { width: 14px; height: 14px; flex: none; }
+
+    /* ── Inputs ── */
+    .inputs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .igroup { display: grid; gap: 5px; align-content: start; min-width: 0; }
+    .igroup label { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+    .igroup .hint { font-size: 11.5px; color: var(--muted); }
+    .ifield { position: relative; }
+    .ifield span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+    .ifield input:only-child { padding-left: 10px !important; }
+    .ifield input[type=text] { font-family: var(--f-body); }
+    .ifield input { width: 100%; padding: 8px 10px 8px 22px; border: 1px solid var(--line); border-radius: 9px; font-family: var(--f-data); font-size: 13px; background: var(--surface-2); }
+
+    /* ── Metric stats ── */
+    .metrics-grid, .proj-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .mc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; min-width: 0; box-shadow: var(--shadow); transition: border-color .15s, box-shadow .15s; }
+    #sec-metrics .mc { cursor: pointer; }
+    #sec-metrics .mc:hover { border-color: var(--accent); box-shadow: var(--shadow), 0 0 0 3px var(--accent-soft); }
+    .mc-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+    .mc-val { font-size: 22px; font-weight: 650; letter-spacing: -.02em; margin-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mc-unit { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+
+    /* ── Health ── */
+    .health-bar { display: flex; align-items: center; gap: 28px; padding: 16px 18px; background: var(--surface-2); border-radius: 12px; }
+    .health-ratio-num { font-size: 40px; font-weight: 650; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .health-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+    .health-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; margin-top: 8px; }
+    .pill-excellent, .pill-good { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+    .pill-fair { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+    .pill-poor { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+    .health-benchmarks { display: flex; flex-direction: column; gap: 7px; }
+    .bm { font-size: 12px; color: var(--ink-2); display: flex; align-items: center; gap: 7px; }
+    .bm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .ratio-track { flex: none; background: var(--surface); border-radius: 999px; height: 10px; position: relative; overflow: hidden; }
+    .ratio-fill { height: 100%; border-radius: 999px; transition: width .4s, background .4s; }
+
+    /* ── Charts ── */
+    .charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .chart-wrap { position: relative; height: 280px; }
+    .chart-subtitle { font-size: 12.5px; font-weight: 500; color: var(--ink-2); margin-bottom: 10px; }
+
+    /* ── Sensitivity ── */
+    .sens-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+    .sliders-col { display: flex; flex-direction: column; gap: 20px; }
+    .slider-group { display: flex; flex-direction: column; gap: 7px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .slider-label { font-size: 13.5px; font-weight: 500; }
+    .slider-badge { font-family: var(--f-data); font-size: 12px; background: var(--accent-soft); color: var(--link); padding: 1px 8px; border-radius: 999px; }
+    .slider-meta { font-size: 12px; color: var(--muted); }
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none; background: var(--surface-2); }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); border: 2px solid var(--key); cursor: pointer; box-shadow: var(--shadow); }
+    input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 2px solid var(--key); cursor: pointer; }
+    .results-col { display: flex; flex-direction: column; gap: 8px; }
+    .results-label { font-size: 12.5px; font-weight: 500; color: var(--ink-2); margin-bottom: 2px; }
+    .sens-row { background: var(--surface-2); border-radius: 12px; padding: 11px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .sens-row-label { font-size: 13px; color: var(--ink-2); }
+    .sens-row-vals { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .sens-base { font-size: 12.5px; color: var(--muted); text-decoration: line-through; }
+    .sens-new { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .delta-pill { font-family: var(--f-data); font-size: 11.5px; padding: 1px 7px; border-radius: 999px; }
+    .pos { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+    .neg { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+    .neu { color: var(--muted); background: var(--surface); border: 1px solid var(--line); }
+
+    /* ── Scenarios ── */
+    .scenarios-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .sc { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+    .sc-head { padding: 10px 14px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+    .sc-head::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--key); }
+    .sc.opt .sc-head::before { background: var(--good); }
+    .sc.pes .sc-head::before { background: var(--bad); }
+    .sc-inputs { padding: 12px 14px; background: var(--surface-2); border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+    .sc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .sc-lbl { font-size: 12.5px; color: var(--ink-2); flex: 1; }
+    .sc-input { width: 96px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; font-family: var(--f-data); font-size: 12.5px; text-align: right; background: var(--surface); }
+    .sc-results { padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .sc-res-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .sc-res-lbl { font-size: 12.5px; color: var(--ink-2); }
+    .sc-res-val { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
     /* ── Project manager bar ── */
-    .proj-mgr-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .proj-mgr-select {
-      flex: 1; min-width: 200px; padding: 9px 12px; border: 1.5px solid var(--border);
-      border-radius: 8px; font-size: 14px; color: var(--text); background: var(--input-bg);
-      cursor: pointer; transition: border-color .18s;
-    }
-    .proj-mgr-select:focus { outline: none; border-color: var(--primary); }
-    .btn-sm {
-      padding: 8px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
-      cursor: pointer; border: 1.5px solid var(--border); background: var(--card);
-      color: var(--muted); transition: border-color .15s, color .15s, opacity .15s;
-      white-space: nowrap;
-    }
-    .btn-sm:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-    .btn-sm:disabled { opacity: .38; cursor: not-allowed; }
-    .btn-sm.save { background: var(--accent); color:#fff; border-color:transparent; }
-    .btn-sm.save:hover { background: var(--accent-hover); opacity: 1; }
-    .btn-sm.save:hover { opacity: .88; }
-    .btn-sm.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
-    .proj-toast {
-      font-size: 12px; font-weight: 500; margin-top: 10px; padding: 7px 12px;
-      border-radius: 7px; display: none;
-    }
-    .proj-toast.ok  { background:#dcfce7; color:#16a34a; }
-    .proj-toast.err { background:#fee2e2; color:#dc2626; }
-    [data-theme="dark"] .proj-toast.ok  { background:#14532d; color:#86efac; }
-    [data-theme="dark"] .proj-toast.err { background:#450a0a; color:#fca5a5; }
+    .proj-mgr-bar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .proj-mgr-select { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px; font-size: 13px; background: var(--surface-2); }
+    .proj-toast { font-size: 12.5px; margin-top: 10px; padding: 6px 12px; border-radius: 9px; display: none; }
+    .proj-toast.ok { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+    .proj-toast.err { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
 
-    /* ── Project tab specifics ── */
-    .proj-results-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px;
-    }
-    .proj-compare {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-    }
-    @media (max-width: 700px) { .proj-compare { grid-template-columns: 1fr; } }
-    .compare-col { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; }
-    .compare-col-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
-    .compare-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); }
+    /* ── Project comparison ── */
+    .proj-results-grid { margin-bottom: 4px; }
+    .proj-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .compare-col { background: var(--surface-2); border-radius: 12px; padding: 14px 16px; }
+    .compare-col-title { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+    .compare-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
     .compare-row:last-child { border-bottom: none; }
-    .compare-lbl { font-size: 13px; color: var(--muted); }
-    .compare-val { font-size: 13px; font-weight: 700; }
-    .compare-val.better { color: #16a34a; }
-    .compare-val.worse  { color: #dc2626; }
+    .compare-lbl { font-size: 13px; color: var(--ink-2); }
+    .compare-val { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .compare-val.better { color: var(--good); }
+    .compare-val.worse { color: var(--bad); }
 
-    /* ── Header layout ── */
-    .hdr-top {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; margin-bottom: 8px;
-    }
-    .hdr-top img { flex-shrink: 0; }
-    header p  { opacity: .72; font-size: 13px; line-height: 1.5; }
-
-    /* ── Dark mode toggle ── */
-    .theme-btn {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
-      color: rgba(255,255,255,.85); padding: 6px 14px; border-radius: 4px; cursor: pointer;
-      font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;
-      transition: background .2s; white-space: nowrap; flex-shrink: 0;
-    }
-    .theme-btn:hover { background: rgba(255,255,255,.22); }
+    /* ── Project tracker ── */
+    .tracker-header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .status-chip-track { padding: 2px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+    .status-on-track { color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); }
+    .status-at-risk { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+    .status-over { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+    .status-no-data { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
+    .tracker-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+    .tracker-stat { background: var(--surface-2); border-radius: 12px; padding: 14px 16px; }
+    .tracker-stat-label { font-size: 12px; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+    .tracker-stat-val { font-size: 22px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+    .actuals-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .actuals-table th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .actuals-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .actuals-table tbody tr:hover td { background: var(--surface-2); }
+    .actuals-table tr:last-child td { border-bottom: none; }
+    .actuals-table .setup-row td { background: var(--surface-2); }
+    .at-input, .at-notes { padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+    .at-input { width: 120px; font-family: var(--f-data); font-size: 12.5px; text-align: right; }
+    .at-notes { width: 180px; font-size: 12.5px; }
+    .period-label { font-weight: 550; font-size: 13px; }
+    .period-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+    .planned-amt { font-weight: 550; font-variant-numeric: tabular-nums; }
+    .at-status { font-size: 15px; text-align: center; min-width: 36px; }
 
     /* ── Password gate ── */
-    .pw-gate {
-      position: fixed; inset: 0; z-index: 9999;
-      background: var(--primary);
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-    }
-    .pw-box {
-      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
-      border-radius: 10px; padding: 36px 32px; width: 100%; max-width: 360px;
-      text-align: center;
-    }
-    .pw-box img   { margin-bottom: 24px; }
-    .pw-box h2    { color: #fff; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
-    .pw-box p     { color: rgba(255,255,255,.6); font-size: 13px; margin-bottom: 20px; }
-    .pw-input {
-      width: 100%; padding: 11px 14px; border-radius: 5px;
-      border: 1.5px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1);
-      color: #fff; font-size: 15px; text-align: center; letter-spacing: .08em;
-      outline: none; box-sizing: border-box; transition: border-color .18s;
-    }
-    .pw-input::placeholder { color: rgba(255,255,255,.35); letter-spacing: 0; }
-    .pw-input:focus { border-color: rgba(255,255,255,.55); }
-    .pw-btn {
-      width: 100%; margin-top: 12px; padding: 12px; border: none; border-radius: 5px;
-      background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
-      cursor: pointer; transition: background .18s;
-    }
-    .pw-btn:hover { background: var(--accent-hover); }
-    .pw-error {
-      color: #fca5a5; font-size: 12px; margin-top: 10px; min-height: 18px;
-    }
-
-    /* ── Mobile responsive ── */
-    @media (max-width: 600px) {
-      header      { padding: 16px 16px 14px; }
-      .app-body   { padding: 14px 14px; }
-      .tabs       { padding: 0 8px; }
-      .tab-btn    { padding: 12px 12px; font-size: 12px; letter-spacing: 0; }
-      .card       { padding: 16px 14px; }
-      .inputs-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-      .metrics-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .mc-val     { font-size: 20px; }
-      .charts-grid { grid-template-columns: 1fr; }
-      .sens-layout { grid-template-columns: 1fr; }
-      .scenarios-grid { grid-template-columns: 1fr; }
-      .proj-compare   { grid-template-columns: 1fr; }
-      .tracker-stats  { grid-template-columns: 1fr 1fr; }
-      .health-bar     { flex-direction: column; align-items: flex-start; gap: 14px; }
-      .health-ratio-num { font-size: 36px; }
-      .hdr-top img    { height: 32px; }
-      .proj-mgr-bar   { flex-direction: column; align-items: stretch; }
-      .proj-mgr-bar .btn-sm, .proj-mgr-bar .btn-calc { width: 100%; }
-      .modal-box      { margin: 0; border-radius: 12px 12px 0 0; max-width: 100%; }
-      .modal-overlay  { align-items: flex-end; padding: 0; }
-      .at-notes       { width: 110px; }
-    }
-
-    /* ── Hidden ── */
-    .hidden { display: none !important; }
-
-    /* ── Project Tracker ── */
-    .tracker-header-row {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
-    }
-    .status-chip-track {
-      padding: 5px 16px; border-radius: 4px; font-size: 13px; font-weight: 700;
-      white-space: nowrap;
-    }
-    .status-on-track { background: #dcfce7; color: #15803d; }
-    .status-at-risk  { background: #fef9c3; color: #a16207; }
-    .status-over     { background: #fee2e2; color: #dc2626; }
-    .status-no-data  { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
-    [data-theme="dark"] .status-on-track { background: #14532d; color: #86efac; }
-    [data-theme="dark"] .status-at-risk  { background: #422006; color: #fbbf24; }
-    [data-theme="dark"] .status-over     { background: #450a0a; color: #fca5a5; }
-
-    .tracker-stats {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;
-    }
-    .tracker-stat {
-      background: var(--surface); border-radius: 6px; padding: 14px 16px;
-      border: 1px solid var(--border);
-    }
-    .tracker-stat-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-    .tracker-stat-val   { font-size: 22px; font-weight: 800; color: var(--primary); }
-
-    .actuals-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .actuals-table th {
-      text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 700;
-      color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
-      border-bottom: 2px solid var(--border); white-space: nowrap;
-    }
-    .actuals-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    .actuals-table tr:last-child td { border-bottom: none; }
-    .actuals-table .setup-row td { background: var(--surface); }
-    .at-input {
-      width: 120px; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 4px;
-      font-size: 13px; color: var(--text); background: var(--input-bg); transition: border-color .15s;
-    }
-    .at-input:focus { outline: none; border-color: var(--primary); }
-    .at-notes {
-      width: 180px; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 4px;
-      font-size: 12px; color: var(--text); background: var(--input-bg); transition: border-color .15s;
-    }
-    .at-notes:focus  { outline: none; border-color: var(--primary); }
-    .period-label    { font-weight: 600; color: var(--text); font-size: 13px; }
-    .period-sub      { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .planned-amt     { font-weight: 600; color: var(--text); }
-    .at-status       { font-size: 16px; text-align: center; min-width: 36px; }
+    .pw-gate { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .pw-box { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 32px 28px; width: 100%; max-width: 360px; text-align: center; box-shadow: var(--shadow-lg); }
+    .pw-box .logo { margin: 0 auto 16px; width: 44px; height: 44px; border-radius: 12px; }
+    .pw-box h2 { font-size: 18px; font-weight: 650; letter-spacing: -.01em; margin-bottom: 4px; }
+    .pw-box p { color: var(--ink-2); font-size: 13px; margin-bottom: 18px; }
+    .pw-input { width: 100%; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface-2); font-size: 14px; text-align: center; }
+    .pw-btn { width: 100%; margin-top: 10px; padding: 9px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-size: 14px; font-weight: 600; }
+    .pw-btn:hover { filter: brightness(1.08); }
+    .pw-error { color: var(--bad); font-size: 12.5px; margin-top: 10px; min-height: 18px; }
 
     /* ── Metric info modal ── */
-    .mc { cursor: pointer; }
-    .mc:hover { box-shadow: var(--shadow-md); border-top-color: var(--accent); }
-    .mc:hover .mc-label { color: var(--primary); }
-
-    .modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(10,15,28,.55); backdrop-filter: blur(3px);
-      align-items: center; justify-content: center; padding: 20px;
-    }
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(10,13,24,.45); backdrop-filter: blur(3px); align-items: center; justify-content: center; padding: 20px; }
     .modal-overlay.open { display: flex; animation: fadeInOverlay .18s ease; }
     @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-
-    .modal-box {
-      background: var(--card); border-radius: 10px; width: 100%; max-width: 460px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: slideUp .2s ease;
-      border: 1px solid var(--border); overflow: hidden;
-    }
+    .modal-box { background: var(--surface); border-radius: 18px; width: 100%; max-width: 460px; box-shadow: var(--shadow-lg); animation: slideUp .2s ease; border: 1px solid var(--line); overflow: hidden; }
     @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-    .modal-header {
-      background: var(--primary); padding: 18px 22px 16px;
-      display: flex; align-items: flex-start; justify-content: space-between;
-    }
-    .modal-header-left { display: flex; flex-direction: column; gap: 4px; }
-    .modal-abbr { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.6); letter-spacing: .1em; text-transform: uppercase; }
-    .modal-title { font-size: 17px; font-weight: 700; color: #fff; }
-    .modal-current { font-size: 28px; font-weight: 800; color: #fff; margin-top: 6px; }
-    .modal-close {
-      background: rgba(255,255,255,.15); border: none; color: #fff;
-      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
-      font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;
-      transition: background .15s; flex-shrink: 0; margin-left: 12px;
-    }
-    .modal-close:hover { background: rgba(255,255,255,.3); }
-
-    .modal-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; }
-
-    .modal-formula-block {
-      background: var(--primary-faint); border-radius: 6px; padding: 14px 16px;
-      border-left: 3px solid var(--primary);
-    }
-    .modal-formula-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
-    .modal-formula-text { font-size: 14px; font-weight: 600; color: var(--primary); font-family: 'Courier New', monospace; }
-
-    .modal-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
-
-    .modal-calc { display: flex; flex-direction: column; gap: 0; }
-    .modal-calc-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
-    .calc-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-    }
+    .modal-header { background: var(--accent-soft); padding: 18px 20px 16px; display: flex; align-items: flex-start; justify-content: space-between; }
+    .modal-header-left { display: flex; flex-direction: column; gap: 2px; }
+    .modal-abbr { font-size: 12px; font-weight: 600; color: var(--link); }
+    .modal-title { font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+    .modal-current { font-size: 28px; font-weight: 650; letter-spacing: -.02em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .modal-close { background: var(--surface); border: 1px solid var(--line); width: 28px; height: 28px; border-radius: 50%; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: 12px; }
+    .modal-close:hover { background: var(--surface-2); }
+    .modal-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+    .modal-formula-block { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+    .modal-formula-label, .modal-calc-label { font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+    .modal-formula-text { font-size: 13px; font-family: var(--f-data); }
+    .modal-desc { font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+    .modal-calc { display: flex; flex-direction: column; }
+    .calc-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
     .calc-row:last-child { border-bottom: none; }
-    .calc-row.result {
-      margin-top: 4px; padding-top: 10px; border-top: 2px solid var(--primary);
-      border-bottom: none; font-weight: 700;
+    .calc-row.result { margin-top: 4px; padding-top: 10px; border-top: 2px solid var(--ink); border-bottom: none; font-weight: 650; }
+    .calc-row.result .calc-lbl, .calc-row.result .calc-num { color: var(--ink); font-size: 14px; }
+    .calc-op { font-size: 14px; color: var(--muted); font-weight: 600; margin-right: 8px; min-width: 14px; text-align: center; }
+    .calc-num { color: var(--ink-2); font-family: var(--f-data); font-size: 12.5px; }
+
+    /* ── Claude pop-up ── */
+    .launcher { position: fixed; right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 900; display: flex; align-items: center; gap: 8px; background: var(--ink); color: var(--surface); border: 0; padding: 11px 18px 11px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; box-shadow: var(--shadow-lg); transition: transform .15s; }
+    .launcher:hover { transform: translateY(-1px); }
+    .launcher .claude-mark { width: 18px; height: 18px; color: #d97757; }
+    .launcher[aria-expanded="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-lg), 0 0 0 1px var(--line); }
+    .launcher .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); display: none; }
+    .launcher.unread .dot { display: inline-block; }
+    .chat-pop { position: fixed; right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 901; width: var(--chat-w, 420px); height: var(--chat-h, 560px); max-width: calc(100vw - 40px); max-height: calc(100vh - 100px); display: flex; flex-direction: column; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 18px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent), 0 24px 64px rgba(10,16,32,.30), 0 6px 16px rgba(10,16,32,.14); overflow: hidden; animation: pop .18s ease-out; }
+    @keyframes pop { from { opacity: .4; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+    .resize { position: absolute; left: 4px; top: 4px; width: 18px; height: 18px; cursor: nwse-resize; z-index: 2; touch-action: none; border-radius: 6px; display: grid; place-items: center; color: var(--muted); }
+    .resize::before { content: ""; width: 8px; height: 8px; border-left: 2px solid currentColor; border-top: 2px solid currentColor; border-top-left-radius: 3px; }
+    .resize:hover { color: var(--ink); background: var(--surface-2); }
+    .chat-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 12px 12px 28px; border-bottom: 1px solid var(--line); background: var(--accent-soft); cursor: grab; user-select: none; touch-action: none; }
+    .chat-pop.dragging { animation: none; user-select: none; }
+    .chat-pop.dragging .chat-head { cursor: grabbing; }
+    .chat-head .t { display: flex; align-items: center; gap: 8px; font-weight: 650; min-width: 0; }
+    .chat-head .t .claude-mark { color: #d97757; width: 16px; height: 16px; }
+    .chat-head .t .sub { font-weight: 400; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-head .btns { flex-wrap: nowrap; flex: none; }
+    .msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .msg { max-width: 92%; line-height: 1.55; overflow-wrap: anywhere; font-size: 13.5px; }
+    .msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-ink); padding: 8px 13px; border-radius: 16px 16px 4px 16px; white-space: pre-wrap; }
+    .msg.assistant { align-self: flex-start; }
+    .msg.assistant p { margin: 0 0 8px; }
+    .msg.assistant p:last-child { margin-bottom: 0; }
+    .msg.assistant ul, .msg.assistant ol { margin: 0 0 8px; padding-left: 20px; }
+    .msg.assistant h4 { margin: 10px 0 4px; font-size: 13.5px; }
+    .msg.assistant code { font-family: var(--f-data); font-size: 12px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+    .msg.assistant .tbl-wrap { overflow-x: auto; }
+    .msg.assistant table { font-size: 12.5px; margin: 4px 0 8px; border-collapse: collapse; width: 100%; }
+    .msg.assistant th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+    .msg.assistant td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+    .msg .tool-note { font-size: 12px; color: var(--link); display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; background: var(--accent-soft); padding: 2px 8px; border-radius: 999px; }
+    .msg.thinking { color: var(--muted); font-style: italic; }
+    .msg.err { color: var(--bad); font-size: 13px; }
+    .sugg { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+    .sugg button { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 6px 10px; font-size: 12.5px; color: var(--ink-2); text-align: left; }
+    .sugg button:hover { color: var(--ink); border-color: var(--accent); }
+    .composer { margin: 0 12px 8px; border: 1px solid var(--line); border-radius: 14px; padding: 6px; display: flex; gap: 6px; align-items: flex-end; background: var(--surface-2); }
+    .composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .composer textarea { flex: 1; resize: none; border: 0 !important; background: transparent; padding: 7px 8px; min-height: 36px; max-height: 150px; line-height: 1.4; box-shadow: none !important; }
+    .composer .btn { border-radius: 10px; }
+    .chat-foot { font-size: 11px; color: var(--muted); padding: 0 16px 12px; }
+    .chat-off { padding: 20px 16px; color: var(--ink-2); }
+
+    /* ── Responsive ── */
+    @media (max-width: 800px) {
+      .charts-grid, .sens-layout, .scenarios-grid, .proj-compare { grid-template-columns: minmax(0, 1fr); }
     }
-    .calc-row.result .calc-lbl { color: var(--primary); font-size: 14px; }
-    .calc-row.result .calc-num { color: var(--primary); font-size: 15px; }
-    .calc-op { font-size: 15px; color: var(--muted); font-weight: 700; margin-right: 8px; min-width: 14px; text-align: center; }
-    .calc-lbl { color: var(--text); }
-    .calc-num { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+    @media (max-width: 600px) {
+      .inputs-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .metrics-grid, .proj-results-grid, .tracker-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .mc-val, .tracker-stat-val { font-size: 19px; }
+      .card { padding: 16px 14px; }
+      .health-bar { flex-direction: column; align-items: stretch; gap: 14px; }
+      .health-ratio-num { font-size: 34px; }
+      .proj-mgr-bar { flex-direction: column; align-items: stretch; }
+      .toolbar .note { display: none; }
+      .modal-box { border-radius: 18px 18px 0 0; max-width: 100%; }
+      .modal-overlay { align-items: flex-end; padding: 0; }
+      .at-notes { width: 110px; }
+    }
+    @media (max-width: 560px) {
+      .chat-pop { left: calc(8px + env(safe-area-inset-left, 0px)); right: calc(8px + env(safe-area-inset-right, 0px)); width: auto; max-width: none; height: min(var(--chat-h, 560px), calc(100vh - 100px)); }
+      .resize { display: none; }
+      .chat-head { padding-left: 14px; cursor: default; }
+    }
+    @media (prefers-reduced-motion: reduce) { .chat-pop, .modal-box, .modal-overlay.open { animation: none; } .launcher { transition: none; } }
   </style>
 </head>
 <body>
@@ -472,7 +339,7 @@
 <!-- ── Password gate ── -->
 <div class="pw-gate" id="pw-gate">
   <div class="pw-box">
-    <img src="logo.svg" alt="BusMetrics" height="44" />
+    <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M2 15V9h3v6zm5.5 0V3h3v12zM13 15V6h3v9z"/></svg></span>
     <h2>Welcome back</h2>
     <p>Enter the password to access your dashboard.</p>
     <input class="pw-input" id="pw-input" type="password" placeholder="Password"
@@ -485,20 +352,20 @@
 <div class="app">
 
   <!-- Header -->
-  <header>
-    <div class="hdr-top">
-      <img src="logo.svg" alt="BusMetrics" height="42" />
-      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark mode</button>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18"><path fill="currentColor" d="M2 15V9h3v6zm5.5 0V3h3v12zM13 15V6h3v9z"/></svg></span>
+      <div style="min-width:0"><h1>BusMetrics</h1><div class="sub">CPA, ARPU, LTV, payback and more · scenarios and sensitivity in real time</div></div>
     </div>
-    <p>Enter raw figures below — calculate CPA, ARPU, LTV, payback period &amp; more, then explore scenarios and sensitivity in real time.</p>
+    <div class="meta"><button class="theme-btn pill" onclick="toggleTheme()" id="theme-btn">Dark mode</button><span id="clock" class="pill"></span></div>
   </header>
 
   <!-- ── TAB NAVIGATION ── -->
-  <div class="tabs" style="margin-bottom:0;">
-    <button class="tab-btn active" onclick="switchTab('company')" id="tab-btn-company">🏢 Company / Department</button>
-    <button class="tab-btn"        onclick="switchTab('project')"  id="tab-btn-project">📋 Project Calculator</button>
-    <button class="tab-btn"        onclick="switchTab('tracker')"  id="tab-btn-tracker">📊 Project Tracker</button>
-  </div>
+  <div class="toolbar"><div class="tabs" role="tablist">
+    <button class="tab-btn active" onclick="switchTab('company')" id="tab-btn-company">KPI's</button>
+    <button class="tab-btn"        onclick="switchTab('project')"  id="tab-btn-project">Project Calculator</button>
+    <button class="tab-btn"        onclick="switchTab('tracker')"  id="tab-btn-tracker">Project Tracker</button>
+  </div><span class="note">Click a metric to see how it's calculated · C opens Claude</span></div>
 
   <!-- ══════════════════════════════════════════════════════ COMPANY TAB ══ -->
   <div class="tab-pane active" id="tab-company">
@@ -574,14 +441,14 @@
         <div id="h-pill" class="health-pill">—</div>
       </div>
       <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
-        <div class="ratio-track"><div class="ratio-fill" id="h-bar" style="width:0%; background: #10b981;"></div></div>
+        <div class="ratio-track"><div class="ratio-fill" id="h-bar" style="width:0%;"></div></div>
         <div style="font-size:11px; color:var(--muted); display:flex; justify-content:space-between;"><span>0:1</span><span>3:1 Good</span><span>5:1 Excellent</span></div>
       </div>
       <div class="health-benchmarks">
-        <div class="bm"><span class="bm-dot" style="background:#16a34a"></span>Excellent: 5 : 1 or higher</div>
-        <div class="bm"><span class="bm-dot" style="background:#059669"></span>Good: 3 : 1 – 5 : 1</div>
-        <div class="bm"><span class="bm-dot" style="background:#ca8a04"></span>Fair: 1 : 1 – 3 : 1</div>
-        <div class="bm"><span class="bm-dot" style="background:#dc2626"></span>Poor: Below 1 : 1</div>
+        <div class="bm"><span class="bm-dot" style="background:var(--good)"></span>Excellent: 5 : 1 or higher</div>
+        <div class="bm"><span class="bm-dot" style="background:color-mix(in srgb, var(--good) 60%, transparent)"></span>Good: 3 : 1 – 5 : 1</div>
+        <div class="bm"><span class="bm-dot" style="background:var(--warn)"></span>Fair: 1 : 1 – 3 : 1</div>
+        <div class="bm"><span class="bm-dot" style="background:var(--bad)"></span>Poor: Below 1 : 1</div>
       </div>
     </div>
   </div>
@@ -722,16 +589,16 @@
 
     <!-- ── Project Manager ── -->
     <div class="card">
-      <div class="card-title">🗂 Saved Projects</div>
+      <div class="card-title">Saved projects</div>
       <div class="proj-mgr-bar">
         <select class="proj-mgr-select" id="proj-select" onchange="onProjectSelect()">
           <option value="">— No saved projects yet —</option>
         </select>
-        <button class="btn-sm"        id="btn-load"   onclick="loadSelectedProject()" disabled>↩ Load</button>
+        <button class="btn-sm"        id="btn-load"   onclick="loadSelectedProject()" disabled>Load</button>
         <button class="btn-sm danger" id="btn-delete" onclick="deleteSelectedProject()" disabled>Delete</button>
         <div style="flex:1; min-width:4px;"></div>
-        <button class="btn-sm"      onclick="newProject()">＋ New</button>
-        <button class="btn-sm save" onclick="saveProject()">💾 Save</button>
+        <button class="btn-sm"      onclick="newProject()">+ New</button>
+        <button class="btn-sm save" onclick="saveProject()">Save</button>
       </div>
       <div class="proj-toast" id="proj-toast"></div>
     </div>
@@ -818,15 +685,15 @@
       <div class="card" id="p-sec-compare">
         <div class="card-title">Project vs. Company Baseline <span class="badge">Comparison</span></div>
         <div id="p-compare-note" class="hidden" style="font-size:13px; color:var(--muted); font-style:italic; margin-bottom:16px;">
-          Calculate the Company tab first to enable the full comparison.
+          Calculate the KPI's tab first to enable the full comparison.
         </div>
         <div class="proj-compare">
           <div class="compare-col">
-            <div class="compare-col-title">📋 This Project</div>
+            <div class="compare-col-title">This project</div>
             <div id="p-col-project"></div>
           </div>
           <div class="compare-col">
-            <div class="compare-col-title">🏢 Company Baseline</div>
+            <div class="compare-col-title">Company baseline</div>
             <div id="p-col-company"></div>
           </div>
         </div>
@@ -843,7 +710,7 @@
 
       <!-- Select project -->
       <div class="card">
-        <div class="card-title">📊 Project Tracker</div>
+        <div class="card-title">Project Tracker</div>
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Select a saved project to track actual costs and revenue against the plan.</p>
         <div class="proj-mgr-bar">
           <select class="proj-mgr-select" id="tracker-select" onchange="onTrackerSelect()">
@@ -900,7 +767,7 @@
           </table>
         </div>
         <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn-calc" onclick="saveActuals()">💾 Save Actuals</button>
+          <button class="btn-calc" onclick="saveActuals()">Save actuals</button>
           <div class="proj-toast" id="tracker-toast" style="position:static;display:none;border-radius:4px;padding:6px 14px;font-size:13px"></div>
         </div>
       </div>
@@ -1015,11 +882,11 @@ function calculate() {
   setText('h-num', ratio != null ? f2(ratio) + ' : 1' : '—');
   const pill = document.getElementById('h-pill');
   const bar  = document.getElementById('h-bar');
-  let cls = 'pill-poor', label = '● Poor', barPct = 0, barColor = '#ef4444';
+  let cls = 'pill-poor', label = '● Poor', barPct = 0, barColor = cssVar('--bad');
   if (ratio != null) {
-    if (ratio >= 5)  { cls='pill-excellent'; label='● Excellent'; barPct = Math.min(100, ratio/8*100); barColor='#16a34a'; }
-    else if (ratio >= 3) { cls='pill-good'; label='● Good';     barPct = Math.min(100, ratio/8*100); barColor='#059669'; }
-    else if (ratio >= 1) { cls='pill-fair'; label='● Fair';     barPct = Math.min(100, ratio/8*100); barColor='#ca8a04'; }
+    if (ratio >= 5)  { cls='pill-excellent'; label='● Excellent'; barPct = Math.min(100, ratio/8*100); barColor=cssVar('--good'); }
+    else if (ratio >= 3) { cls='pill-good'; label='● Good';     barPct = Math.min(100, ratio/8*100); barColor=cssVar('--good'); }
+    else if (ratio >= 1) { cls='pill-fair'; label='● Fair';     barPct = Math.min(100, ratio/8*100); barColor=cssVar('--warn'); }
     else                 { barPct = Math.min(100, ratio/8*100); }
   }
   pill.className = 'health-pill ' + cls;
@@ -1075,8 +942,8 @@ function renderCharts(m) {
       labels: ['CPA', 'ARPU', 'RMC', 'EPC'],
       datasets: [{
         data: [m.cpa, m.arpu, m.rmc, m.epc],
-        backgroundColor: ['#6366f1','#10b981','#f59e0b','#3b82f6'],
-        borderRadius: 7,
+        backgroundColor: [cssVar('--key'), cssVar('--accent'), cssVar('--before'), cssVar('--good')],
+        borderRadius: 6,
       }]
     },
     options: {
@@ -1099,7 +966,7 @@ function renderCharts(m) {
         {
           label: 'Cumulative P&L / customer',
           data: cumulative,
-          borderColor: '#4f46e5',
+          borderColor: cssVar('--key'),
           fill: {
             target: { value: 0 },
             above: 'rgba(16,185,129,.15)',
@@ -1117,7 +984,7 @@ function renderCharts(m) {
           data: months.map(i => i === bkPt ? cumulative[bkPt] : null),
           type: 'scatter',
           pointRadius: 8,
-          pointBackgroundColor: '#10b981',
+          pointBackgroundColor: cssVar('--good'),
           pointBorderColor: cardColor,
           pointBorderWidth: 2,
           showLine: false,
@@ -1296,11 +1163,11 @@ function calculateProject() {
 
   const netEl = document.getElementById('p-net');
   netEl.textContent = fk(netProfit);
-  netEl.style.color = netProfit >= 0 ? '#10b981' : '#ef4444';
+  netEl.style.color = netProfit >= 0 ? cssVar('--good') : cssVar('--bad');
 
   const roiEl = document.getElementById('p-roi');
   roiEl.textContent = roi != null ? (roi >= 0 ? '+' : '') + f1(roi) + '%' : '—';
-  roiEl.style.color = roi != null ? (roi >= 0 ? '#10b981' : '#ef4444') : '';
+  roiEl.style.color = roi != null ? (roi >= 0 ? cssVar('--good') : cssVar('--bad')) : '';
 
   setText('p-ltv',   fk(ltv));
   setText('p-ratio', ratio != null ? f2(ratio) + ' : 1' : '—');
@@ -1321,9 +1188,9 @@ function calculateProject() {
     data: {
       labels: months.map(i => 'M' + i),
       datasets: [
-        { label: 'Cumulative Revenue', data: cumRev,  borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-        { label: 'Cumulative Cost',    data: cumCost, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.06)',  fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-        { label: 'Net Profit',         data: cumNet,  borderColor: '#4f46e5', borderDash: [5,4], tension: 0.3, pointRadius: 0, borderWidth: 2, fill: false },
+        { label: 'Cumulative Revenue', data: cumRev,  borderColor: cssVar('--good'), backgroundColor: 'rgba(17,138,85,.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Cumulative Cost',    data: cumCost, borderColor: cssVar('--bad'), backgroundColor: 'rgba(210,63,63,.06)',  fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Net Profit',         data: cumNet,  borderColor: cssVar('--key'), borderDash: [5,4], tension: 0.3, pointRadius: 0, borderWidth: 2, fill: false },
       ]
     },
     options: {
@@ -1511,17 +1378,18 @@ updateProjectDropdown();
 updateTrackerDropdown();
 
 // ─── Dark mode ────────────────────────────────────────────────────────────────
+const isDarkNow = () => (document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
 function toggleTheme() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark = isDarkNow();
   const next = isDark ? 'light' : 'dark';
   applyTheme(next);
   localStorage.setItem('bm-theme', next);
 }
 
 function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
+  if (theme) document.documentElement.setAttribute('data-theme', theme);
   const btn = document.getElementById('theme-btn');
-  btn.textContent = theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+  btn.textContent = isDarkNow() ? 'Light mode' : 'Dark mode';
   // Re-render charts with new theme colours if they exist
   if (B.cpa) renderCharts(B);
 }
@@ -1723,9 +1591,9 @@ function renderBurnChart(plannedCum, actualCumChart, duration) {
         {
           label: 'Planned Cumulative Cost',
           data: plannedCum,
-          borderColor: '#1B2A47',
+          borderColor: cssVar('--muted'),
           borderDash: [6, 4],
-          backgroundColor: 'rgba(27,42,71,.07)',
+          backgroundColor: 'rgba(141,191,232,.12)',
           fill: true,
           tension: 0,
           pointRadius: 2,
@@ -1734,12 +1602,12 @@ function renderBurnChart(plannedCum, actualCumChart, duration) {
         {
           label: 'Actual Cumulative Cost',
           data: actualCumChart,
-          borderColor: '#E0000F',
-          backgroundColor: 'rgba(224,0,15,.09)',
+          borderColor: cssVar('--key'),
+          backgroundColor: 'transparent',
           fill: false,
           tension: 0,
           pointRadius: 5,
-          pointBackgroundColor: '#E0000F',
+          pointBackgroundColor: cssVar('--key'),
           borderWidth: 2.5,
           spanGaps: false,
         },
@@ -1814,8 +1682,12 @@ async function submitPassword() {
 
 // Restore saved theme on load
 (function () {
-  const saved = localStorage.getItem('bm-theme') || 'light';
+  let saved = null;
+  try { saved = localStorage.getItem('bm-theme'); } catch {}
   applyTheme(saved);
+  if (window.Chart) { Chart.defaults.font.family = getComputedStyle(document.body).fontFamily; Chart.defaults.color = cssVar('--muted'); }
+  const tick = () => { const d = new Date(); document.getElementById('clock').textContent = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); };
+  tick(); setInterval(tick, 30000);
 })();
 
 // ─── Metric info modal ────────────────────────────────────────────────────────
@@ -2012,5 +1884,317 @@ function _modalEsc(e) { if (e.key === 'Escape') closeMetricModal(); }
     </div>
   </div>
 </div>
+
+<!-- ── Claude chat ── -->
+<aside class="chat-pop" id="chat" aria-label="Chat with Claude" hidden>
+  <div class="resize" id="chatResize" title="Drag to resize" aria-hidden="true"></div>
+  <div class="chat-head" title="Drag to move · double-click to put it back in the corner">
+    <div class="t"><svg class="claude-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1l1.6 4.4L14 7l-4.4 1.6L8 13l-1.6-4.4L2 7l4.4-1.6z"/></svg>Claude <span class="sub">sees your KPIs and projects</span></div>
+    <span class="btns"><button class="btn ghost sm" id="clearChat">New chat</button><button class="btn ghost sm" id="hideChat" aria-label="Hide chat">✕</button></span>
+  </div>
+  <div class="msgs" id="msgs" aria-live="polite"></div>
+  <div class="sugg" id="sugg"></div>
+  <div class="composer">
+    <textarea id="chatInput" rows="1" placeholder="Ask about your metrics…"></textarea>
+    <button class="btn primary" id="sendBtn">Send</button>
+    <button class="btn" id="stopBtn" hidden>Stop</button>
+  </div>
+  <div class="chat-foot">Claude only sees the figures on this page and its knowledge has a cutoff. Double-check numbers before you act on them.</div>
+</aside>
+<button class="launcher" id="launcher" aria-expanded="false" aria-controls="chat" title="Show or hide Claude (C)"><svg class="claude-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1l1.6 4.4L14 7l-4.4 1.6L8 13l-1.6-4.4L2 7l4.4-1.6z"/></svg>Claude<span class="dot" aria-hidden="true"></span></button>
+
+<script>
+(() => {
+"use strict";
+// ─── Claude chat ──────────────────────────────────────────────────────────────
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS_CHAT = "bm-chat", LS_CHATUI = "bm-chatui";
+let sample = null, toolsOk = false, chatReady = false, perms = null, sampleState = "unknown";
+let turns = [];
+try { turns = JSON.parse(localStorage.getItem(LS_CHAT) || "[]").filter(t => t && t.content && (t.role === "user" || t.role === "assistant")); } catch {}
+let chatCtl = null, busy = false;
+
+function sampleErr(e) {
+  switch (e?.code) {
+    case "not_granted": case "sampling_disabled": case "capability_disabled": case "not_declared": return "Claude isn't enabled for this page. Allow it from the artifact's permissions to use this.";
+    case "rate_limited": return "You've hit a usage limit. Wait a little and try again.";
+    case "session_expired": return "Your session expired. Sign in again and retry.";
+    case "refused": return "Claude declined that request. Try rephrasing it.";
+    case "prompt_too_large": return "That's too much text at once. Send a shorter message.";
+    case "cancelled": return "Stopped.";
+    case "tools_unavailable": return "This Claude app can't change the page's inputs. Plain chat still works.";
+    default: return "Something went wrong reaching Claude. Try again.";
+  }
+}
+const errLine = e => sampleErr(e) + (e?.code && e.code !== "cancelled" ? ` [${e.code}]` : "");
+
+function md(src) {
+  const lines = esc(src).split("\n"); let html = "", list = null, para = [];
+  const inline = s => s.replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  const flushP = () => { if (para.length) { html += `<p>${inline(para.join("<br>"))}</p>`; para = []; } };
+  const flushL = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^\s*\|.*\|\s*$/.test(l)) {
+      flushP(); flushL(); const rows = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; } i--;
+      const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(c => inline(c.trim()));
+      const body = rows.filter(r => !/^\s*\|[\s:|-]+\|\s*$/.test(r));
+      html += `<div class="tbl-wrap"><table><thead><tr>${cells(body[0]).map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${body.slice(1).map(r => `<tr>${cells(r).map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+      continue;
+    }
+    let m;
+    if ((m = l.match(/^#{1,4}\s+(.*)/))) { flushP(); flushL(); html += `<h4>${inline(m[1])}</h4>`; }
+    else if ((m = l.match(/^\s*[-*•]\s+(.*)/))) { flushP(); if (list !== "ul") { flushL(); html += "<ul>"; list = "ul"; } html += `<li>${inline(m[1])}</li>`; }
+    else if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { flushP(); if (list !== "ol") { flushL(); html += "<ol>"; list = "ol"; } html += `<li>${inline(m[1])}</li>`; }
+    else if (!l.trim()) { flushP(); flushL(); }
+    else { flushL(); para.push(l); }
+  }
+  flushP(); flushL(); return html;
+}
+
+// ─── Page data for Claude ──
+const KPI_FIELDS = { totalCustomers: "i_totalCust", newCustomers: "i_newCust", churnedCustomers: "i_churnCust", monthlyRevenue: "i_revenue", acquisitionSpend: "i_acqSpend", monthlyCogs: "i_cogs", monthlyFixedCosts: "i_fixed" };
+const PROJECT_FIELDS = { budget: "p_budget", durationMonths: "p_duration", expectedCustomers: "p_customers", revenuePerCustomerMonth: "p_arpu", variableCostPerCustomerMonth: "p_varCost", monthlyOverhead: "p_fixedMo", monthlyChurnPct: "p_churn" };
+const PROJECT_OUT = { cpa: "p-cpa", monthlyRevenue: "p-mrr", monthlyProfit: "p-mprofit", breakEven: "p-breakeven", totalRevenue: "p-total-rev", totalCost: "p-total-cost", netProfit: "p-net", roi: "p-roi", ltv: "p-ltv", ltvToCpa: "p-ratio" };
+const numOf = id => { const v = parseFloat(document.getElementById(id).value); return Number.isFinite(v) ? v : null; };
+const rd = v => v == null || !Number.isFinite(v) ? null : +v.toFixed(2);
+const txt = id => document.getElementById(id).textContent;
+const readFields = map => Object.fromEntries(Object.entries(map).map(([k, id]) => [k, numOf(id)]));
+const visible = id => !document.getElementById(id).classList.contains("hidden");
+const TAB_NAMES = { company: "KPI's", project: "Project Calculator", tracker: "Project Tracker" };
+
+function metricsOut(m) {
+  return { cpa: rd(m.cpa), arpu: rd(m.arpu), rmcCostPerCustomer: rd(m.rmc), epcEarningsPerCustomer: rd(m.epc), paybackMonths: rd(m.payback), ltv: rd(m.ltv), churnRatePct: rd(m.churnRate != null ? m.churnRate * 100 : null), grossMarginPct: rd(m.gm), mrr: rd(m.mrr), arr: rd(m.arr), ltvToCpa: rd(m.ratio) };
+}
+function kpiMetrics() { return B.mrr === undefined ? "not calculated yet (the user hasn't pressed Calculate Metrics)" : metricsOut(B); }
+function projectResults() {
+  if (!visible("p-sec-results")) return "not calculated yet";
+  return Object.fromEntries(Object.entries(PROJECT_OUT).map(([k, id]) => [k, txt(id)]));
+}
+function pageContext() {
+  const actuals = getActuals();
+  const activeTab = (document.querySelector(".tab-pane.active")?.id || "").replace("tab-", "");
+  return JSON.stringify({
+    activeTab: TAB_NAMES[activeTab] || activeTab,
+    kpis: {
+      inputs: readFields(KPI_FIELDS),
+      metrics: kpiMetrics(),
+      sensitivitySliders: B.mrr === undefined ? undefined : { cpaPct: numOf("sl-cpa"), arpuPct: numOf("sl-arpu"), churnPct: numOf("sl-churn"), grossMarginPts: numOf("sl-gm") },
+      scenarioOverrides: B.mrr === undefined ? undefined : {
+        optimistic: { cpa: numOf("sc-opt-cpa"), arpu: numOf("sc-opt-arpu"), churnPct: numOf("sc-opt-churn"), grossMarginPct: numOf("sc-opt-gm") },
+        pessimistic: { cpa: numOf("sc-pes-cpa"), arpu: numOf("sc-pes-arpu"), churnPct: numOf("sc-pes-churn"), grossMarginPct: numOf("sc-pes-gm") }
+      }
+    },
+    projectCalculator: { name: document.getElementById("p_name").value.trim() || "(unnamed)", inputs: readFields(PROJECT_FIELDS), results: projectResults() },
+    savedProjects: getProjects().map(p => {
+      const a = actuals[p.id] || [], withCost = a.filter(x => +x.cost > 0);
+      return { name: p.name || "Untitled", inputs: p.inputs, actuals: withCost.length ? { monthsWithCostEntered: withCost.length, totalActualCost: a.reduce((s, x) => s + (+x.cost || 0), 0), totalActualRevenue: a.reduce((s, x) => s + (+x.revenue || 0), 0) } : "none entered" };
+    }),
+    trackerOnScreen: trackerProject && visible("tracker-sec-summary") ? { project: trackerProject.name, status: txt("tracker-status-chip"), plannedTotal: txt("tr-planned-total"), spent: txt("tr-spent"), remaining: txt("tr-remaining"), varianceVsPlan: txt("tr-variance") } : undefined
+  });
+}
+function rules(withTools = toolsOk) {
+  return `You are the analyst inside "BusMetrics", a business metrics dashboard. Today is ${new Date().toISOString().slice(0, 10)}.
+The page has three tabs: "KPI's" (company or department unit economics from raw inputs, with an LTV : CPA health indicator, sensitivity sliders and optimistic/pessimistic scenarios), "Project Calculator" (economics of a single project or campaign, compared with the company baseline) and "Project Tracker" (actual monthly cost and revenue of a saved project against plan).
+Help the user understand and improve their numbers as a candid, experienced finance and growth advisor. Be concrete and use the figures below. Keep answers compact (short paragraphs or bullets, small tables when comparing). Reply in the user's language. Money is shown in $ on the page.
+How the page calculates (use these exact definitions):
+- CPA = acquisition spend ÷ new customers. ARPU = monthly revenue ÷ total active customers. Churn rate = churned ÷ total active customers (monthly).
+- Gross margin = (revenue − COGS) ÷ revenue. RMC = (COGS + fixed costs) ÷ total customers. EPC = ARPU − RMC.
+- LTV = ARPU × gross margin ÷ churn rate. Payback = CPA ÷ EPC (months). MRR = monthly revenue, ARR = MRR × 12. Health: LTV : CPA ≥ 5 excellent, 3–5 good, 1–3 fair, < 1 poor.
+- Project: CPA = budget ÷ expected customers; monthly profit = customers × (revenue − variable cost per customer) − monthly overhead; break-even = budget ÷ monthly profit; total cost = budget + running costs × duration; ROI = net profit ÷ budget; project LTV uses margin (revenue − variable cost) ÷ revenue.
+Don't invent industry benchmarks as facts; if you give typical ranges, say they are rough rules of thumb.
+${withTools ? `Use evaluate_kpis to test what-if figures without changing the screen. When the user asks to try or apply different figures, call set_kpi_inputs or set_project_inputs: they fill in the form on screen, recalculate and return the results. Only pass the fields that change.` : `If you suggest different figures, list them precisely so the user can type them into the form.`}
+
+Current page data (live):
+${pageContext()}`;
+}
+
+const KPI_SCHEMA = { type: "object", properties: {
+  totalCustomers: { type: "number", description: "Total active customers" },
+  newCustomers: { type: "number", description: "New customers acquired this period" },
+  churnedCustomers: { type: "number", description: "Customers lost this period" },
+  monthlyRevenue: { type: "number", description: "Total monthly revenue ($)" },
+  acquisitionSpend: { type: "number", description: "Marketing + sales spend this period ($)" },
+  monthlyCogs: { type: "number", description: "Monthly COGS / variable costs ($)" },
+  monthlyFixedCosts: { type: "number", description: "Monthly fixed costs ($)" }
+} };
+const PROJECT_SCHEMA = { type: "object", properties: {
+  name: { type: "string", description: "Project name" },
+  budget: { type: "number", description: "Total project budget ($)" },
+  durationMonths: { type: "number", description: "Project duration in months" },
+  expectedCustomers: { type: "number", description: "Expected new customers" },
+  revenuePerCustomerMonth: { type: "number", description: "Revenue per customer per month ($)" },
+  variableCostPerCustomerMonth: { type: "number", description: "Variable cost per customer per month ($)" },
+  monthlyOverhead: { type: "number", description: "Monthly fixed project overhead ($)" },
+  monthlyChurnPct: { type: "number", description: "Monthly churn rate in percent" }
+} };
+function applyFields(map, input) {
+  const changed = [];
+  for (const [k, id] of Object.entries(map)) {
+    const v = Number(input?.[k]);
+    if (input?.[k] != null && Number.isFinite(v) && v >= 0) { document.getElementById(id).value = v; changed.push(k); }
+  }
+  return changed;
+}
+
+async function sendChat(text) {
+  text = String(text || "").trim(); if (!text || busy) return;
+  if (!sample) { setChatOpen(true); renderChat(); return; }
+  if (sampleState === "denied" && perms) { try { sampleState = await perms.state("sample"); } catch {} if (sampleState === "denied") { setChatOpen(true); renderChat(); return; } }
+  busy = true; setChatOpen(true); $("#chatInput").value = ""; autoGrow();
+  turns.push({ role: "user", content: text }); renderChat();
+  const el = $("#msgs"), bubble = document.createElement("div"); bubble.className = "msg assistant thinking"; bubble.textContent = "Thinking…"; el.appendChild(bubble); el.scrollTop = el.scrollHeight;
+  $("#sendBtn").hidden = true; $("#stopBtn").hidden = false;
+  chatCtl = new AbortController(); let toolNote = "";
+  const history = turns.slice(-16).map(({ role, content }) => ({ role, content }));
+  while (history.length && history[0].role !== "user") history.shift();
+  const tools = toolsOk ? [
+    { name: "evaluate_kpis", description: "Compute the KPI metrics for different raw inputs WITHOUT changing the user's screen. Fields left out keep their current values.", inputSchema: KPI_SCHEMA,
+      execute: input => { const cur = readFields(KPI_FIELDS); for (const k in cur) { const v = Number(input?.[k]); if (input?.[k] != null && Number.isFinite(v)) cur[k] = v; } return { inputs: cur, metrics: metricsOut(compute(...Object.values(cur).map(v => v || 0))) }; } },
+    { name: "set_kpi_inputs", description: "Fill these raw inputs into the KPI's tab on screen, recalculate and show it. Fields left out keep their current values. Returns the new metrics.", inputSchema: KPI_SCHEMA,
+      execute: input => { const ch = applyFields(KPI_FIELDS, input); if (!ch.length) throw new Error("No valid fields given"); calculate(); switchTab("company"); toolNote = `Updated ${ch.length} KPI input${ch.length === 1 ? "" : "s"}`; return { changed: ch, metrics: kpiMetrics() }; } },
+    { name: "set_project_inputs", description: "Fill these values into the Project Calculator on screen, recalculate and show it. Fields left out keep their current values. Returns the project results.", inputSchema: PROJECT_SCHEMA,
+      execute: input => {
+        const ch = applyFields(PROJECT_FIELDS, input);
+        if (typeof input?.name === "string" && input.name.trim()) { document.getElementById("p_name").value = input.name.trim(); document.getElementById("p-name-display").textContent = input.name.trim(); ch.push("name"); }
+        if (!ch.length) throw new Error("No valid fields given");
+        switchTab("project"); calculateProject(); toolNote = "Updated the Project Calculator";
+        return { changed: ch, results: projectResults() };
+      } }
+  ] : undefined;
+  const ask = withTools => sample([{ role: "user", content: rules(withTools) }, ...history], {
+    cache: false, signal: chatCtl.signal, tools: withTools ? tools : undefined,
+    onText: ({ text: t }) => { bubble.className = "msg assistant"; bubble.innerHTML = (toolNote ? `<div class="tool-note">↳ ${esc(toolNote)}</div>` : "") + md(t); el.scrollTop = el.scrollHeight; }
+  });
+  try {
+    let res;
+    try { res = await ask(!!tools); }
+    catch (e) {
+      // One plain retry when the tool-enabled call is refused before any text arrived
+      if (tools && !e?.text && ["tools_unavailable", "invalid_request", "transform_error", "prompt_too_large", "upstream_error"].includes(e?.code)) {
+        if (e.code === "tools_unavailable" || e.code === "invalid_request") toolsOk = false;
+        res = await ask(false);
+      } else throw e;
+    }
+    const { text: answer, truncated } = res;
+    turns.push({ role: "assistant", content: answer + (truncated ? "\n\n*(Answer cut short.)*" : ""), tool: toolNote || undefined });
+  } catch (e) {
+    if (e?.text && e.code !== "refused") turns.push({ role: "assistant", content: e.text + "\n\n*(Interrupted.)*", tool: toolNote || undefined });
+    if (e?.code === "not_granted") sampleState = "denied";
+    if (e?.code !== "cancelled") {
+      persistChat(); renderChat();
+      if (sampleState !== "denied") { const er = document.createElement("div"); er.className = "msg err"; er.textContent = errLine(e); $("#msgs").appendChild(er); }
+    }
+  }
+  busy = false; $("#sendBtn").hidden = false; $("#stopBtn").hidden = true;
+  persistChat(); if (!document.querySelector(".msg.err") && sampleState !== "denied") renderChat();
+  if ($("#chat").hidden) $("#launcher").classList.add("unread");
+}
+
+const SUGGESTIONS = ["How healthy are my unit economics?", "What's the quickest way to improve my LTV : CPA ratio?", "What happens to my numbers if churn doubles?", "Is my project worth it compared with the company baseline?", "Explain my payback period in plain words"];
+function renderChat() {
+  const el = $("#msgs");
+  if (!sample || sampleState === "denied") {
+    const why = !chatReady ? "Connecting to Claude…"
+      : sampleState === "denied" ? "Claude is switched off for this page. Turn on <b>Claude</b> in the page's permissions, then send your message again."
+      : "This view can't reach Claude. Open the page at claude.ai in a browser, or in the Claude desktop or mobile app, while signed in.";
+    el.innerHTML = `<div class="chat-off">${why}${perms && chatReady ? `<div style="margin-top:10px"><button class="btn sm" id="permBtn">Open permissions</button></div>` : ""}</div>`;
+    $("#sugg").innerHTML = "";
+    $("#permBtn") && ($("#permBtn").onclick = openPerms);
+    return;
+  }
+  el.innerHTML = turns.length ? turns.map(t => `<div class="msg ${t.role}">${t.role === "user" ? esc(t.content) : (t.tool ? `<div class="tool-note">↳ ${esc(t.tool)}</div>` : "") + md(t.content)}</div>`).join("")
+    : `<div class="msg assistant"><p>I can see your KPI inputs and metrics, the Project Calculator, your saved projects and their tracked actuals.</p><p>Ask me what your numbers mean, or describe a change ("what if we cut acquisition spend by 20%?") and I can fill it in so you see the effect.</p></div>`;
+  $("#sugg").innerHTML = turns.length ? "" : SUGGESTIONS.map(s => `<button>${esc(s)}</button>`).join("");
+  $("#sugg").querySelectorAll("button").forEach(b => b.onclick = () => sendChat(b.textContent));
+  el.scrollTop = el.scrollHeight;
+}
+function persistChat() { try { localStorage.setItem(LS_CHAT, JSON.stringify(turns.slice(-40).map(({ role, content, tool }) => ({ role, content, tool })))); } catch {} }
+function autoGrow() { const t = $("#chatInput"); t.style.height = "auto"; t.style.height = Math.min(160, t.scrollHeight) + "px"; }
+async function openPerms() {
+  try { await perms.manage(); } catch { $("#msgs").insertAdjacentHTML("beforeend", `<div class="msg err">Open the page's Permissions menu to turn Claude on.</div>`); return; }
+  try { sampleState = await perms.state("sample"); } catch {}
+  renderChat();
+}
+
+// ─── Pop-up: unmoved it sits bottom-right via CSS; once dragged it is placed by left/top, kept on screen ──
+let chatUI = { open: false, w: 420, h: 560 };
+try { chatUI = { ...chatUI, ...JSON.parse(localStorage.getItem(LS_CHATUI) || "{}") }; } catch {}
+function saveChatUI() { try { localStorage.setItem(LS_CHATUI, JSON.stringify(chatUI)); } catch {} }
+const isPhone = () => window.matchMedia("(max-width: 560px)").matches;
+const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+function applyChatSize() {
+  const c = $("#chat"); c.style.setProperty("--chat-w", chatUI.w + "px"); c.style.setProperty("--chat-h", chatUI.h + "px");
+  if (chatUI.x != null && !isPhone()) {
+    const w = c.hidden ? chatUI.w : c.getBoundingClientRect().width;
+    chatUI.x = clampN(chatUI.x, 8, Math.max(8, window.innerWidth - w - 8));
+    chatUI.y = clampN(chatUI.y, 8, Math.max(8, window.innerHeight - 56));
+    Object.assign(c.style, { left: chatUI.x + "px", top: chatUI.y + "px", right: "auto", bottom: "auto" });
+  } else Object.assign(c.style, { left: "", top: "", right: "", bottom: "" });
+}
+function setChatOpen(open) {
+  chatUI.open = open; saveChatUI();
+  $("#chat").hidden = !open; $("#launcher").setAttribute("aria-expanded", String(open));
+  if (open) { applyChatSize(); $("#launcher").classList.remove("unread"); const m = $("#msgs"); m.scrollTop = m.scrollHeight; setTimeout(() => $("#chatInput").focus(), 0); }
+}
+(() => {
+  const c = $("#chat"), head = c.querySelector(".chat-head");
+  let mode = null, sx, sy, r0;
+  const move = e => {
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (mode === "drag") { chatUI.x = r0.left + dx; chatUI.y = r0.top + dy; }
+    else {
+      chatUI.w = clampN(r0.width - dx, 320, window.innerWidth - 32); chatUI.h = clampN(r0.height - dy, 340, window.innerHeight - 90);
+      if (chatUI.x != null) { chatUI.x = r0.right - chatUI.w; chatUI.y = r0.bottom - chatUI.h; }
+    }
+    applyChatSize();
+  };
+  const up = () => { mode = null; c.classList.remove("dragging"); window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); saveChatUI(); };
+  const start = (m, e) => {
+    if (isPhone() || e.button !== 0) return;
+    e.preventDefault(); mode = m; sx = e.clientX; sy = e.clientY; r0 = c.getBoundingClientRect();
+    c.classList.add("dragging");
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+  };
+  $("#chatResize").addEventListener("pointerdown", e => start("resize", e));
+  head.addEventListener("pointerdown", e => { if (!e.target.closest("button")) start("drag", e); });
+  head.addEventListener("dblclick", e => { if (e.target.closest("button")) return; chatUI.x = chatUI.y = null; applyChatSize(); saveChatUI(); });
+  window.addEventListener("resize", () => { if (!c.hidden) applyChatSize(); });
+})();
+
+// ─── Wiring ──
+$("#sendBtn").onclick = () => sendChat($("#chatInput").value);
+$("#launcher").onclick = () => setChatOpen($("#chat").hidden);
+$("#hideChat").onclick = () => { setChatOpen(false); $("#launcher").focus(); };
+$("#stopBtn").onclick = () => chatCtl?.abort();
+$("#clearChat").onclick = () => { if (busy) chatCtl?.abort(); turns = []; persistChat(); renderChat(); };
+$("#chatInput").addEventListener("input", autoGrow);
+$("#chatInput").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(e.target.value); } });
+$("#chat").addEventListener("keydown", e => { if (e.key === "Escape") { setChatOpen(false); $("#launcher").focus(); } });
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, [contenteditable]") || document.getElementById("metric-modal").classList.contains("open")) return;
+  if (e.key === "c" || e.key === "C") { e.preventDefault(); setChatOpen($("#chat").hidden); }
+});
+applyChatSize(); setChatOpen(!!chatUI.open); renderChat();
+
+(async () => {
+  const use = window.claude?.use;
+  sample = use ? await window.claude.use("sample").catch(() => null) : null;
+  chatReady = true;
+  if (sample) {
+    toolsOk = true;
+    sample.limits().then(lim => { toolsOk = !!lim?.tools; }, () => { toolsOk = false; });
+  }
+  if (use) window.claude.use("permissions").then(async p => {
+    perms = p;
+    if (p) { try { sampleState = await p.state("sample"); } catch {} }
+    renderChat();
+  }, () => {});
+  renderChat();
+})();
+})();
+</script>
 </body>
 </html>
